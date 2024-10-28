@@ -12,17 +12,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: mydatabase
-        ports:
-          - 5432:5432
-        volumes:
-          - postgres_data:/var/lib/postgresql/data
           
     steps:
     - name: Checkout code
@@ -37,19 +26,18 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build image
-      run: |
-        docker build -t myusername/myapp:${{ github.sha }} .
-      
-    - name: Push image to Docker Hub
-      run: |
-        docker push myusername/myapp:${{ github.sha }}
+    - name: Build Docker Image
+        run: |
+          docker build -t your-docker-username/your-image:latest .
 
-    - name: Deploy to Server
-      env:
-        DOCKER_HOST: ssh://user@yourserver.com
-      run: |
-        ssh user@yourserver.com "docker pull myusername/myapp:${{ github.sha }} && docker-compose up -d"
+      - name: Push Docker Image
+        run: |
+          docker push your-docker-username/your-image:latest
 
-volumes:
-  postgres_data:
+      - name: Pull Docker Image
+        run: |
+          docker pull your-docker-username/your-image:latest
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker-compose up -d
