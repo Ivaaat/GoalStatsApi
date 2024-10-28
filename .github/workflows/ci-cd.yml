@@ -30,13 +30,13 @@ jobs:
           docker build -t varkkosh/goalstatapi:latest .
 
     - name: Push Docker Image
-        run: 
+        run:
           docker push varkkosh/goalstatapi:latest
 
     - name: Pull Docker Image
-        run: 
+        run:
           docker pull varkkosh/goalstatapi:latest
 
     - name: Deploy with Docker Compose
-        run: 
+        run:
           docker-compose up -d
