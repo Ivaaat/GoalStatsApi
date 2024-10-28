@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Футбольная Статистика</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- <h1>Введите ваш токен</h1>
+            <input type="text" id="tokenInput" class="form-control" placeholder="Введите токен здесь">
+        <div id="clubsContainer" style="display:none;"> -->
+        <h1 class="text-center">Футбольная Статистика</h1>
+
+        <h2>Статистика клуба:</h2>
+        <pre id="statistics" style="background: #f0f0f0; padding: 10px;"></pre>
+        
+
+        <form id="search-form" class="mt-4">
+            <div class="row mb-3">
+                <div class="col">
+                    <label for="season" class="form-label">Сезон</label>
+                    <select id="season" class="form-select" name="season">
+                        <option value="">Выберите сезон</option>
+                        <!-- Здесь будут опции для сезонов -->
+                    </select>
+                </div>
+                <div class="col">
+                    <label for="league" class="form-label">Чемпионат</label>
+                    <select id="league" class="form-select" name="league">
+                        <option value="">Выберите чемпионат</option>
+                        <!-- Здесь будут опции для чемпионатов -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col">
+                    <label for="club" class="form-label">Клуб</label>
+                    <select id="club" class="form-select" name="club">
+                        <option value="">Выберите клуб</option>
+                        <!-- Здесь будут опции для клубов -->
+                    </select>
+                </div>
+                <div class="col">
+                    <label for="country" class="form-label">Страна</label>
+                    <select id="country" class="form-select" name="country">
+                        <option value="">Выберите страну</option>
+                        <!-- Здесь будут опции для стран -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col">
+                    <label for="club-search" class="form-label">Поиск клуба:</label>
+                    <input type="text" id="club-search" class="form-control" placeholder="Введите название клуба" list="club-suggestions" />
+                </div>
+            </div>
+            <datalist id="club-suggestions"></datalist>
+
+            <div class="row mb-3">
+                <div class="col">
+                    <label for="player" class="form-label">Игрок</label>
+                    <input type="text" id="player" class="form-control" name="player" placeholder="Введите имя игрока">
+                </div>
+            </div>
+
+            <!-- <button type="submit" class="btn btn-primary">Поиск</button> -->
+        </form>
+
+        <div id="results" class="mt-5">
+            <h2>Результаты:</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Игрок</th>
+                        <th>Клуб</th>
+                        <th>Чемпионат</th>
+                        <th>Сезон</th>
+                        <th>Страна</th>
+                        <th>Статистика</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Здесь будут строки с результатами -->
+                </tbody>
+            </table>
+        </div>
+
+        
+        
+
+        <div id="statistic-details" class="mt-5" style="display: none;">
+            <h2>Подробная статистика:</h2>
+            <pre id="json-output" class="border p-3"></pre>
+            <button id="back-button" class="btn btn-secondary mt-3">Вернуться к результатам</button>
+        </div>
+    </div>
+
+    <script>
+        const DOMAIN = 'http://www.goalstatsapi.ru';
+        console.log(`${DOMAIN}`);
+        document.getElementById('search-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            // Здесь будет логика отправки формы и отображения результатов
+            fetchStatistics();
+        });
+
+        // Пример функции для получения данных статистики
+        function fetchStatistics() {
+            const season = document.querySelector('select[name="season"]').value;
+            const league = document.querySelector('select[name="league"]').value;
+            const club = document.querySelector('select[name="club"]').value;
+            const country = document.querySelector('select[name="country"]').value;
+            const player = document.querySelector('input[name="player"]').value;
+
+            // Пример AJAX-запроса
+            fetch(`/api/statistics?season=${season}&league=${league}&club=${club}&country=${country}&player=${player}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        function displayResults(data) {
+            const tbody = document.querySelector('#results tbody');
+            tbody.innerHTML = ''; // Очистить текущее содержимое
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="#" class="player-link" data-id="${item.playerId}">${item.playerName}</a></td>
+                    <td>${item.club}</td>
+                    <td>${item.league}</td>
+                    <td>${item.season}</td>
+                    <td>${item.country}</td>
+                    <td><button class="btn btn-info view-stats" data-id="${item.playerId}">Посмотреть статистику</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Добавить обработчик событий для кнопок статистики игроков
+            document.querySelectorAll('.view-stats').forEach(button => {
+                button.addEventListener('click', function() {
+                    const playerId = this.getAttribute('data-id');
+                    fetchPlayerStatistics(playerId);
+                });
+            });
+        }
+
+        function fetchPlayerStatistics(playerId) {
+            fetch(`/api/player/statistics/${playerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('json-output').textContent = JSON.stringify(data, null, 2);
+                    document.getElementById('statistic-details').style.display = 'block';
+                    document.getElementById('results').style.display = 'none';
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        document.getElementById('back-button').addEventListener('click', function() {
+            document.getElementById('statistic-details').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+        });
+        // async function fetchClubs() {
+        //     try {
+        //         const response = await fetch(`${DOMAIN}/api/clubs`); // Замените на свой адрес
+        //         if (!response.ok) {
+        //             throw new Error('Сетевая ошибка: ' + response.statusText);
+        //         }
+        //         const clubs = await response.json();
+
+        //         const selectElement = document.getElementById('season');
+        //         selectElement.innerHTML = ''; // Очищаем предыдущие опции
+
+        //         clubs.forEach(club => {
+        //             const option = document.createElement('option');
+        //             option.value = club.id;
+        //             option.textContent = club.name;
+        //             selectElement.appendChild(option);
+        //         });
+        //     } catch (error) {
+        //         console.error('Ошибка при загрузке клубов:', error);
+        //     }
+        // }
+        async function fetchSeasons() {
+            const response = await fetch(`${DOMAIN}/api/seasons`);
+            return await response.json();
+        }
+
+        async function fetchChampionships(season) {
+            const response = await fetch(`${DOMAIN}/api/championships?season=${season}`);
+            return await response.json();
+        }
+
+        async function fetchClubs(championship, season) {
+            const response = await fetch(`${DOMAIN}/api/clubs?championship=${championship}&season=${season}`);
+            return await response.json();
+        }
+
+        async function fetchStatistics(club, season) {
+            const response = await fetch(`/api/statistics?club=${club}&season=${season}`);
+            return await response.json();
+        }
+
+        async function fetchAllClubs() {
+            const response = await fetch('/api/clubs'); // Отправляем запрос на получение всех клубов
+            return await response.json();
+        }
+
+        async function updateSeasons() {
+            const seasons = await fetchSeasons();
+            const seasonSelect = document.getElementById('season');
+            seasonSelect.innerHTML = ''; // Очистка предыдущих опций
+            seasons.forEach(season => {
+                const option = document.createElement('option');
+                option.value = season;
+                option.textContent = season;
+                seasonSelect.appendChild(option);
+            });
+            // Загрузить чемпионаты после загрузки сезонов
+            await updateChampionships();
+        }
+
+        async function updateChampionships() {
+            const season = document.getElementById('season').value;
+            const championships = await fetchChampionships(season);
+            const championshipSelect = document.getElementById('league');
+            championshipSelect.innerHTML = ''; // Очистка предыдущих опций
+            championships.forEach(championship => {
+                const option = document.createElement('option');
+                option.value = championship;
+                option.textContent = championship;
+                championshipSelect.appendChild(option);
+            });
+            // Загрузить клубы, когда будут выбраны чемпионаты
+            await updateClubs();
+        }
+
+        async function updateClubs() {
+            const championshipSelect = document.getElementById('league');
+            const championship = championshipSelect.value;
+            const season = document.getElementById('season').value;
+
+            const clubs = await fetchClubs(championship, season);
+            const clubSelect = document.getElementById('club');
+            const clubSearch = document.getElementById('club-search');
+            clubSelect.innerHTML = '';
+
+            clubs.forEach(club => {
+                const option = document.createElement('option');
+                option.value = club;
+                option.textContent = club;
+                clubSelect.appendChild(option);
+            });
+
+            // Выбор последнего клуба и обновление статистики
+            if (clubs.length > 0) {
+                clubSelect.value = clubs[clubs.length - 1]; // Выбор последнего клуба
+                await updateStatistics(); // Автоматически обновляем статистику клуба
+            }
+
+            // Очищаем поле поиска клуба и обновляем его дропдаун
+            clubSearch.value = '';
+            searchClubs(); // Обновляем список клубов в datalist
+        }
+
+        async function updateStatistics() {
+            const season = document.getElementById('season').value;
+            const club = document.getElementById('club').value;
+            if (club) {
+                const statistics = await fetchStatistics(club, season);
+                document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
+            }
+        }
+        let lastTime = 0;
+        async function searchClubs() {
+            const currentTime = Date.now();
+            const timeDiff = currentTime - lastTime;
+
+            //if (timeDiff < 300) return; // Лимит: 300 мс
+            lastTime = currentTime;
+            const query = document.getElementById('club-search').value.toLowerCase();
+            if (!query) {
+                document.getElementById('club-suggestions').innerHTML = ''; // Очищаем предложения, если запрос пустой
+                return;
+            }
+            const response = await fetch(`/api/search/clubs?query=${encodeURIComponent(query)}`);
+            const filteredClubs = await response.json();
+            const datalist = document.getElementById('club-suggestions');
+            datalist.innerHTML = '';
+
+            filteredClubs.forEach(club => {
+                const option = document.createElement('option');
+                option.value = club;
+                datalist.appendChild(option);
+            });
+
+            // Если при вводе только одно совпадение, обновляем выбор клуба
+            if (filteredClubs.length === 1) {
+                document.getElementById('club-search').value = filteredClubs[0];
+                document.getElementById('club').value = filteredClubs[0];
+                document.getElementById('club').value = filteredClubs[0];
+                await updateStatistics();
+            }
+        }
+
+        function selectClub() {
+            const selectedClub = document.getElementById('club-search').value;
+            document.getElementById('club').value = selectedClub;
+            updateStatistics();
+            // Очистка поля для поиска по клубам
+            document.getElementById('club-search').value = '';
+            document.getElementById('club-suggestions').innerHTML = ''; // Очищаем список предложений
+        }
+
+
+        // Вызываем функцию после загрузки страницы
+        window.onload = async function(){
+            document.getElementById('player').addEventListener('click', () => {
+                document.getElementById('player').disabled = true;
+                console.log("Тесты начались: поле ввода отключено.");
+            });
+            await updateSeasons(); // Загружаем сезоны
+            document.getElementById('season').addEventListener('change', updateChampionships);
+            document.getElementById('league').addEventListener('change', updateClubs);
+            document.getElementById('club').addEventListener('change', updateStatistics);
+            document.getElementById('club-search').addEventListener('input', searchClubs);
+            document.getElementById('club-search').addEventListener('change', selectClub);
+            // await fetchClubs();
+
+        };
+        
+    </script>
+</body>
+</html>
