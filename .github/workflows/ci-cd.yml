@@ -11,7 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
           
     steps:
     - name: Checkout code
@@ -30,14 +29,14 @@ jobs:
         run: |
           docker build -t your-docker-username/your-image:latest .
 
-      - name: Push Docker Image
+    - name: Push Docker Image
         run: |
           docker push your-docker-username/your-image:latest
 
-      - name: Pull Docker Image
+    - name: Pull Docker Image
         run: |
           docker pull your-docker-username/your-image:latest
 
-      - name: Deploy with Docker Compose
+    - name: Deploy with Docker Compose
         run: |
           docker-compose up -d
