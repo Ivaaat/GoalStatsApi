@@ -27,15 +27,15 @@ jobs:
 
     - name: Build Docker Image
         run:
-          docker build -t your-docker-username/your-image:latest .
+          docker build -t varkkosh/goalstatapi:latest .
 
     - name: Push Docker Image
         run: 
-          docker push your-docker-username/your-image:latest
+          docker push varkkosh/goalstatapi:latest
 
     - name: Pull Docker Image
         run: 
-          docker pull your-docker-username/your-image:latest
+          docker pull varkkosh/goalstatapi:latest
 
     - name: Deploy with Docker Compose
         run: 
