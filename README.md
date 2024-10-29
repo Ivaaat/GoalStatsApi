@@ -25,7 +25,7 @@ GoalStat API — это RESTful API, предназначенное для пр�
 ### Клонировать репозиторий
 
 ```bash
-git clone https://github.com/Ivaaat/goalstatapi.git
+git clone https://github.com/Ivaaat/GoalStatsApi.git
 cd goalstatapi
 
 ### Запуск через Docker 
