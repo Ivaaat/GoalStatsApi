@@ -9,14 +9,14 @@ class SeasonRepository:
         pass
 
     async def get_all(self):
-        seasons = await self.db.fetch("""SELECT season_name, id FROM stats.seasons x
-                                    where season_name like '%/%'
-                                    ORDER BY x.season_name DESC""")
+        seasons = await self.db.fetch("""SELECT name, id FROM stats.seasons x
+                                    where name like '%/%'
+                                    ORDER BY x.name DESC""")
         return [dict(season) for season in seasons]
 
     async def get(self, season_id: int):
         data = await self.db.fetch("""SELECT c.id, c.name FROM stats.seasons_champs s
-                                join stats.champs c on c.id = s.league_id 
+                                join stats.champs_info c on c.id = s.league_id 
                                 where s.season_id = $1 and c.is_top 
                                 ORDER BY c.name asc""", season_id)
         return data

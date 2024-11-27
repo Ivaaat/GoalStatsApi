@@ -59,9 +59,17 @@ async def read_statistics_championship(championship_id: int):
 # # Аналогично для клубов
 
 # Получение статистики по клубу
-@router.get("/statistics/")
+@router.get("/statistics/{club_id}")
 async def read_statistics_club(club_id: int, club: ClubRepository = Depends(get_club_repository)):
-    club_stat = await club.get_stat(club_id)
+    club_stat = await club.get(club_id)
+    if club_stat:
+        return JSONResponse(content = club_stat)
+    raise HTTPException(status_code=404, detail="Club not found")
+
+# Получение статистики по клубу
+@router.get("/statistics/{season_id}")
+async def read_statistics_club(club_id: int, club: ClubRepository = Depends(get_club_repository)):
+    club_stat = await club.get_club(club_id)
     if club_stat:
         return JSONResponse(content = club_stat)
     raise HTTPException(status_code=404, detail="Club not found")

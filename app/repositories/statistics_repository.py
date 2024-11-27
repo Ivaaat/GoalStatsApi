@@ -10,8 +10,15 @@ class StatisticsRepository:
         # Логика создания статистики
         pass
 
-    async def get(self, rep: Union[ClubRepository, ChampionshipRepository, SeasonRepository, PlayerRepository]):
-        rep.get_stat()
+    async def get_club(self, club_id):
+        data = await self.db.fetch("""select s.name as season_name, JSONB_OBJECT_AGG(c.id, c.name)  as champ_name,  JSONB_OBJECT_AGG(t.id, t.name) as team_name  from seas_champ_teams sct 
+                                    join seasons s on s.id = sct.id_season 
+                                    join champs_info  c on c.id = sct.id_champ 
+                                    join teams_info  t  on t.id = sct.id_teams
+                                    where t.id = $1
+                                    group by s.name
+                                    order by s.name desc""", club_id)
+        return data
 
     async def update(self, player_id: int, data: dict):
         # Логика обновления статистики игрока

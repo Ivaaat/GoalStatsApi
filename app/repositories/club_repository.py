@@ -10,20 +10,26 @@ class ClubRepository:
 
     async def get_all(self, championship_id):
         clubs = await self.db.fetch("""select t.name, t.id from stats.champs_teams ct  
-                                    join stats.teams t on t.id = ct.team_id 
+                                    join stats.teams_info t on t.id = ct.team_id 
                                     where ct.champ_id = $1
                                     order by t.name asc""", championship_id)
         return [dict(club)for club in clubs]
 
+
     async def get(self, club_id: int):
-        # Логика получения клуба по ID
-        pass
+       club_stat = await self.db.fetch("""select * from stats.teams  
+                                       join 
+                                    where id = $1
+                                       """, club_id)
+       return [dict(club)for club in club_stat]
+
 
     async def search(self, query: str):
-        clubs = await self.db.fetch("SELECT distinct name FROM stats.teams WHERE name ILIKE $1 LIMIT 5", '{}%'.format(query))
+        clubs = await self.db.fetch("SELECT name FROM stats.teams WHERE name ILIKE $1 LIMIT 5", '{}%'.format(query))
         return [club.get('name') for club in clubs] 
     
-    async def get_stat(self, club_id: int):
+
+    async def get_club(self, club_id: int):
         stat = await self.db.fetchrow('''SELECT
                                 t.name,
                                 COUNT(m.score) AS games,
@@ -40,7 +46,7 @@ class ClubRepository:
                                 SUM(CASE WHEN m.home_team_id = t.id THEN m.total_home - m.total_away ELSE 0 END) +
                                 SUM(CASE WHEN m.away_team_id = t.id THEN m.total_away - m.total_home ELSE 0 END) AS goal_difference
                                 FROM 
-                                    stats.teams t
+                                    stats.teams_info t
                                 JOIN
                                     stats.matches m ON (t.id = m.home_team_id OR t.id = m.away_team_id)
                                 where t.id = $1
