@@ -10,14 +10,30 @@ class StatisticsRepository:
         # Логика создания статистики
         pass
 
-    async def get_club(self, club_id):
-        data = await self.db.fetch("""select s.name as season_name, JSONB_OBJECT_AGG(c.id, c.name)  as champ_name,  JSONB_OBJECT_AGG(t.id, t.name) as team_name  from seas_champ_teams sct 
-                                    join seasons s on s.id = sct.id_season 
-                                    join champs_info  c on c.id = sct.id_champ 
-                                    join teams_info  t  on t.id = sct.id_teams
-                                    where t.id = $1
-                                    group by s.name
-                                    order by s.name desc""", club_id)
+    async def get_club(self, club_name):
+        data = await self.db.fetch("""
+                                    select
+                                        s.name as season_name,
+                                        JSONB_OBJECT_AGG(ci.id,
+                                        ci.name) as champ_name,
+                                        JSONB_OBJECT_AGG(ti.id,
+                                        ti.name) as team_name
+                                    from
+                                        stats.seas_champ_teams sct
+                                    join stats.seasons s on
+                                        s.id = sct.id_season
+                                    join stats.champs_info ci on
+                                        ci.id = sct.id_champ
+                                    join stats.teams_info ti on
+                                        ti.id = sct.id_teams
+                                    join stats.teams t2 on
+                                        t2.id = ti.team_id
+                                    where
+                                        t2.name = $1
+                                    group by
+                                        s.name
+                                    order by
+                                        s.name desc""", club_name)
         return data
 
     async def update(self, player_id: int, data: dict):

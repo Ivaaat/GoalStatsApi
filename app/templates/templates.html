@@ -440,12 +440,18 @@
             const seasonSelect = document.getElementById('season');
             seasonSelect.innerHTML = ''; // Очистка предыдущих опций
             sessionStorage.clear() 
-            sessionStorage.setItem('seasons',statClub);
+            sessionStorage.setItem('seasons',JSON.stringify(statClub['seasons']));
+            const oneSeason = true
             Object.keys(statClub['seasons']).forEach(seasonName => {
                 const option = document.createElement('option');
                 option.value = seasonName;
                 option.textContent = seasonName;
                 seasonSelect.appendChild(option);
+                if (oneSeason) {
+                    const option = document.createElement('option');
+                    option.value = seasonName;
+                    option.textContent = seasonName;
+                }
             });
         }
 
