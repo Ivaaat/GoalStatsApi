@@ -66,11 +66,10 @@ async def read_statistics_club(club_name: str, stat: StatisticsRepository = Depe
     club_ret = {}
     for club in club_stat:
         club_st = dict(club)
-        club_ret[club_st['season_name']] = {'champs': json.loads(club_st['champ_name']),
-                                            'teams': json.loads(club_st['team_name'])}
+        club_ret[club_st['season_name']] = json.loads(club_st['champ_name_id_team'])
 
 
-    if club_stat:
+    if club_ret:
         return JSONResponse(content = club_ret)
     raise HTTPException(status_code=404, detail="Club not found")
 

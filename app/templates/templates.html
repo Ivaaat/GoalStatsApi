@@ -180,13 +180,13 @@
                         <!-- Здесь будут опции для клубов -->
                     </select>
                 </div>
-                <div class="col">
+                <!-- <div class="col">
                     <label for="country" class="form-label">Страна</label>
                     <select id="country" class="form-select" name="country">
                         <option value="">Выберите страну</option>
                         <!-- Здесь будут опции для стран -->
                     </select>
-                </div>
+                </div> -->
             </div>
 
             <div class="row mb-3">
@@ -436,23 +436,68 @@
             resultsList.style.display = 'none';
             noResultsDiv.style.display = 'none';
             const statClub = await fetchAllStatClub(query);
-            console.log(statClub)
+            
             const seasonSelect = document.getElementById('season');
             seasonSelect.innerHTML = ''; // Очистка предыдущих опций
             sessionStorage.clear() 
-            sessionStorage.setItem('seasons',JSON.stringify(statClub['seasons']));
-            const oneSeason = true
-            Object.keys(statClub['seasons']).forEach(seasonName => {
+            sessionStorage.setItem('seasons',JSON.stringify(statClub));
+            const sortedKeys = Object.keys(statClub).sort();
+            
+            sortedKeys.reverse().forEach(key => {
                 const option = document.createElement('option');
-                option.value = seasonName;
-                option.textContent = seasonName;
+                option.value = key;
+                option.textContent = key;
                 seasonSelect.appendChild(option);
-                if (oneSeason) {
-                    const option = document.createElement('option');
-                    option.value = seasonName;
-                    option.textContent = seasonName;
-                }
             });
+            const champ =  document.getElementById('league')
+            champ.innerHTML = ''
+            let optionDef = document.createElement('option');
+            optionDef.value = 'Выберите чемпионат';
+            optionDef.textContent = 'Выберите чемпионат';
+            champ.appendChild(optionDef) ;
+            const season = document.getElementById('season').value;
+            Object.keys(statClub[season]).forEach(champName => {
+                const option = document.createElement('option');
+                option.value = champName;
+                option.textContent = champName;
+                champ.appendChild(option);
+            });
+
+            let club = document.getElementById('club')
+            club.innerHTML = ''
+            let optionQuery = document.createElement('option');
+            optionQuery.value = query;
+            optionQuery.textContent = query;
+            club.appendChild(optionQuery) ;
+
+            document.getElementById('season').removeEventListener('change', updateChampionships);
+            document.getElementById('league').removeEventListener('change', updateClubs);
+            document.getElementById('club').removeEventListener('change', updateStatistics);
+
+            document.getElementById('season').addEventListener('change', changeSeason);
+            document.getElementById('league').addEventListener('change', changeLeague);
+        }
+
+        async function changeSeason() {
+            const season = document.getElementById('season').value;
+            const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
+            const champSelect = document.getElementById('league');
+            champSelect.innerHTML = ''
+            Object.keys(seasonStat[season]).forEach(champName => {
+                const option = document.createElement('option');
+                option.value = champName;
+                option.textContent = champName;
+                champSelect.appendChild(option);
+            });
+        }
+
+        async function changeLeague(query) {
+            const season = document.getElementById('season').value;
+            const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
+            const champ = document.getElementById('league').value;
+            console.log(seasonStat[season][champ])
+            const statistics = await fetchStatisticsClubId(seasonStat[season][champ]);
+            document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
         }
 
         let lastTime = 0;
@@ -501,10 +546,7 @@
             document.getElementById('club-search').value = '';
             document.getElementById('results').innerHTML = ''; // Очищаем список предложений
         }
-
-
-        // Вызываем функцию после загрузки страницы
-        window.onload = async function(){
+        async function main(){
             document.getElementById('player').addEventListener('click', () => {
                 document.getElementById('player').disabled = true;
                 console.log("Тесты начались: поле ввода отключено.");
@@ -513,10 +555,18 @@
             document.getElementById('season').addEventListener('change', updateChampionships);
             document.getElementById('league').addEventListener('change', updateClubs);
             document.getElementById('club').addEventListener('change', updateStatistics);
+
+            document.getElementById('season').removeEventListener('change', changeSeason);
+            document.getElementById('league').removeEventListener('change', changeLeague);
             //document.getElementById('club-search').addEventListener('input', searchClubs);
             // await fetchClubs();
 
         };
+
+
+        // Вызываем функцию после загрузки страницы
+        window.onload = main()
+
         const searchInput = document.getElementById('club-search');
         const resultsList = document.getElementById('results');
         const noResultsDiv = document.getElementById('no-results');
@@ -547,7 +597,8 @@
 
             debounceTimer = setTimeout(() => {
                 if (query === '') {
-                    renderHistory(); // Если пусто, показываем историю или ничего
+                    renderHistory();
+                    main() // Если пусто, показываем историю или ничего
                     return;
                 }
 
@@ -576,6 +627,10 @@
                     noResultsDiv.style.display = 'none';
                 }
             } else if (event.key === 'Backspace') {
+                if (searchInput.value == '') {
+                    main()
+
+                }
                 if (searchInput.value !== previousValue) {
                     clearTimeout(debounceTimer);
                     previousValue = searchInput.value; // Обновляем последнее значение
