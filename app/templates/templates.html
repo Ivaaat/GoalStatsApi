@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Футбольная Статистика</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -7,12 +13,10 @@
             margin: 0;
             padding: 20px;
         }
-
         h1 {
             text-align: center;
             color: #495057;
         }
-
         .custom-select {
             position: relative;
             display: inline-block;
@@ -77,14 +81,6 @@
                 padding: 10px;
             }
         }
-
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
         .search-wrapper {
             max-width: 400px;
             margin: 0 auto;
@@ -136,22 +132,49 @@
             display: none;
             margin-top: 10px;
         }
+        /* Стили для Prism.js */
+        
+        #jsonWindow {
+            display: none; /* Скрываем окно по умолчанию */
+            max-width: 600px;
+            max-height: 400px;
+            padding: 20px;
+            background-color: #1e1e1e; /* Черный фон для окна */
+            color: white;  /* Белый текст */
+            border: 1px solid #ccc; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* Позволяет прокручивать содержимое */
+            border-radius: 5px;
+        }
+        pre {
+            background-color: #1e1e1e; /* Убираем белый фон */
+            margin: 0; /* Убираем отступы */
+            overflow: auto; /* Позволяет прокручивать содержимое */
+            white-space: pre-wrap; /* Оборачиваем длинные строки */
+        }
+        /* .hljs {
+            background-color: #1e1e1e;
+            color: white;
+
+        } */
     </style>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Футбольная Статистика</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-</head>
+    
 <body>
     <div class="container mt-5">
         <!-- <h1>Введите ваш токен</h1>
             <input type="text" id="tokenInput" class="form-control" placeholder="Введите токен здесь">
         <div id="clubsContainer" style="display:none;"> -->
-        <h1 class="text-center">Футбольная Статистика</h1>
 
+        <h1 class="text-center">Футбольная Статистика</h1>
+        <div id="jsonWindow">
+            <h2>Статистика клуба:</h2>
+            <pre><code id="statistics" class="language-json"></code></pre>
+        </div>
+        <!-- <div id="overlay"></div>
         <h2>Статистика клуба:</h2>
-        <pre id="statistics" style="background: #f0f0f0; padding: 10px;"></pre>
+         <pre id="statistics" style="background: #f0f0f0; padding: 10px;"></pre> 
+        <pre id="statistics" class="language-json"></code></pre> -->
         
 
         <form id="search-form" class="mt-4">
@@ -184,9 +207,9 @@
                     <label for="country" class="form-label">Страна</label>
                     <select id="country" class="form-select" name="country">
                         <option value="">Выберите страну</option>
-                        <!-- Здесь будут опции для стран -->
+                        Здесь будут опции для стран -->
                     </select>
-                </div> -->
+                </div> 
             </div>
 
             <div class="row mb-3">
@@ -237,7 +260,7 @@
             <button id="back-button" class="btn btn-secondary mt-3">Вернуться к результатам</button>
         </div>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
     <script>
         const DOMAIN = 'http://127.0.0.1:8000'
         // const DOMAIN = 'https://www.goalstatsapi.ru/'
@@ -332,7 +355,7 @@
         }
         
         async function fetchStatisticsClubId(club_id) {
-            const response = await fetch(`${DOMAIN}/api/clubs/${club_id}`);
+            const response = await fetch(`${DOMAIN}/api/clubs/${club_id}/statistics`);
             return await response.json();
         }
 
@@ -342,7 +365,7 @@
         }
         
         async function fetchClub(query) {
-            const response = await fetch(`/api/search/clubs?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/clubs/search/?query=${encodeURIComponent(query)}`);
             return await response.json();
         }
 
@@ -424,6 +447,9 @@
                 const clubId = sessionStorage.getItem(club);
                 const statistics = await fetchStatisticsClubId(clubId);
                 document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
+                // Обновляем подсветку синтаксиса
+                hljs.highlightElement(document.getElementById('statistics'));
+                document.getElementById('jsonWindow').style.display = 'block';
             }
             // sessionStorage.clear() 
 
@@ -451,24 +477,30 @@
             });
             const champ =  document.getElementById('league')
             champ.innerHTML = ''
-            let optionDef = document.createElement('option');
-            optionDef.value = 'Выберите чемпионат';
-            optionDef.textContent = 'Выберите чемпионат';
-            champ.appendChild(optionDef) ;
+            // let optionDef = document.createElement('option');
+            // optionDef.value = 'Выберите чемпионат';
+            // optionDef.textContent = 'Выберите чемпионат';
+            // champ.appendChild(optionDef) ;
             const season = document.getElementById('season').value;
+            let oneChamp = ''
+            let isOne = true 
             Object.keys(statClub[season]).forEach(champName => {
+                if (isOne) {
+                    oneChamp = champName
+                    isOne = false
+                }
                 const option = document.createElement('option');
                 option.value = champName;
                 option.textContent = champName;
                 champ.appendChild(option);
             });
-
             let club = document.getElementById('club')
             club.innerHTML = ''
             let optionQuery = document.createElement('option');
             optionQuery.value = query;
             optionQuery.textContent = query;
             club.appendChild(optionQuery) ;
+            getStatistics(statClub[season][oneChamp])
 
             document.getElementById('season').removeEventListener('change', updateChampionships);
             document.getElementById('league').removeEventListener('change', updateClubs);
@@ -483,12 +515,24 @@
             const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
             const champSelect = document.getElementById('league');
             champSelect.innerHTML = ''
+            let oneChamp = ''
+            let isOne = true 
             Object.keys(seasonStat[season]).forEach(champName => {
+                if (isOne) {
+                    oneChamp = champName
+                    isOne = false
+                }
                 const option = document.createElement('option');
                 option.value = champName;
                 option.textContent = champName;
                 champSelect.appendChild(option);
             });
+            getStatistics(seasonStat[season][oneChamp])
+        }
+
+        async function getStatistics(query) {
+            const statistics = await fetchStatisticsClubId(query);
+            document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
         }
 
         async function changeLeague(query) {
@@ -496,8 +540,8 @@
             const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
             const champ = document.getElementById('league').value;
             console.log(seasonStat[season][champ])
-            const statistics = await fetchStatisticsClubId(seasonStat[season][champ]);
-            document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
+            getStatistics(seasonStat[season][champ])
+            
         }
 
         let lastTime = 0;
@@ -514,7 +558,6 @@
             }
             const filteredClubs = await fetchClub(query)
             resultsList.innerHTML = '';
-
             if (filteredClubs.length > 0) {
                 filteredClubs.forEach(item => {
                     const li = document.createElement('li');
@@ -575,6 +618,7 @@
         let debounceTimer;
         let backspaceHoldTimer;
         let previousValue = ''; // Для хранения предыдущего значения
+        let allDel = false
 
         function highlightMatches(item, query) {
             const regex = new RegExp(`(${query})`, 'gi');
@@ -625,13 +669,15 @@
                     resultsList.innerHTML = '';
                     resultsList.style.display = 'none';
                     noResultsDiv.style.display = 'none';
+                    updateSelect(itemToSelect)
                 }
             } else if (event.key === 'Backspace') {
-                if (searchInput.value == '') {
+                if (!allDel && searchInput.value == '') {
                     main()
-
+                    allDel = true
                 }
                 if (searchInput.value !== previousValue) {
+                    allDel = false
                     clearTimeout(debounceTimer);
                     previousValue = searchInput.value; // Обновляем последнее значение
                     searchInput.value = searchInput.value.slice(0, -1); // Удаление последнего символа
@@ -646,6 +692,7 @@
                         }
                     }, 100);
                 }
+                event.preventDefault()
             }
         });
 
@@ -674,5 +721,7 @@
         });
         
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+
 </body>
 </html>

@@ -1,5 +1,6 @@
 from fastapi import Depends
 from db import get_database_connection
+import asyncpg
 from repositories import ChampionshipRepository, SeasonRepository, ClubRepository, PlayerRepository, StatisticsRepository
 
 async def get_championship_repository(connection=Depends(get_database_connection)) -> ChampionshipRepository:
@@ -16,3 +17,4 @@ async def get_player_repository(connection=Depends(get_database_connection)) -> 
 
 async def get_stat_repository(connection=Depends(get_database_connection)) -> StatisticsRepository:
     return StatisticsRepository(connection)
+
