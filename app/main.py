@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 # Инициализация шаблонов
-templates = Jinja2Templates(directory="./app/templates/")
+templates = Jinja2Templates(directory="templates/")
 
 
 @app.get("/", response_class=HTMLResponse)
