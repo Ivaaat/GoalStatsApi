@@ -1,13 +1,27 @@
 import asyncpg
+from models import Club
+
 
 class ClubRepository:
     def __init__(self, db: asyncpg.Connection):
         self.db = db
         self.pool: asyncpg.Pool
 
-    async def create(self, data: dict):
-        # Логика создания клуба
-        pass
+
+    async def create(self, club: Club):
+        id_team = await self.db.fetchval("""SELECT id FROM stats.teams_info WHERE old_id = $1""", club.old_id)
+        if id_team:
+            club.id = id_team
+            return None
+        id_team_all = await self.db.fetchval("""INSERT INTO stats.teams (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id""", club.name)
+        id = await self.db.fetchval("""INSERT INTO stats.teams_info ("name", icon, old_id, team_id) 
+                                    VALUES ($1,$2,$3,$4) RETURNING id""", 
+                                    club.name,
+                                    club.icon,
+                                    club.old_id,
+                                    id_team_all)
+        return id
+
 
     async def get_all(self, championship_id):
         clubs = await self.db.fetch("""select t.name, t.id from stats.champs_teams ct  

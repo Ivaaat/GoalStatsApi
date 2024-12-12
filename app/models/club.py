@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class Club(BaseModel):
-    club_id: int
-    name: str 
-    icon: str
-    old_id: int
+    id: Optional[int] = None
+    name: str
+    icon: Optional[str] = None
+    old_id: Optional[int] = None
     

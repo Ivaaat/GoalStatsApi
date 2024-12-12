@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class Championship(BaseModel):
-    id: int
+    id: Optional[int] = None 
     name: str
     country: Optional[str] = None
     priority: Optional[int] = None

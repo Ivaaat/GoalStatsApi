@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
-from controllers import season_router, championship_router, club_router, player_router, statistics_router
+from controllers import season_router, championship_router, club_router, player_router, statistics_router, match_router
 from db import lifespan
 
 
@@ -13,6 +13,7 @@ app.include_router(season_router, prefix="/api", tags=["seasons"])
 app.include_router(championship_router, prefix="/api", tags=["championships"])
 app.include_router(club_router, prefix="/api", tags=["clubs"])
 app.include_router(player_router, prefix="/api", tags=["players"])
+app.include_router(match_router, prefix="/api", tags=["matches"])
 app.include_router(statistics_router, prefix="/api", tags=["statistics"])
 
 # Настройка CORS 

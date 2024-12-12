@@ -3,15 +3,19 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from dependencies import get_club_repository
 from repositories import ClubRepository
+from models import Club
 import asyncio
 import json
 
 router = APIRouter()
 
 @router.post("/clubs/")
-async def create_club(club_info: dict):
-    # Логика создания нового клуба через репозиторий
-    pass
+async def create_club(club: Club, rep: ClubRepository = Depends(get_club_repository)):
+    id = await rep.create(club)
+    if id:
+        return JSONResponse(content={"message": "Club created", 'club_id': id}, status_code=201)
+    else:
+        raise HTTPException(status_code=409, detail={"error": "Club already exists.", "club": dict(club)})
 
 
 @router.get("/clubs/")

@@ -8,9 +8,12 @@ from repositories import ChampionshipRepository
 router = APIRouter()
 
 @router.post("/championships/")
-async def create_championship(championship: Championship, conn=Depends(get_championship_repository)):
-    # Логика создания нового чемпионата через репозиторий
-    pass
+async def create_championship(championship: Championship, rep: ChampionshipRepository = Depends(get_championship_repository)):
+    id = await rep.create(championship)
+    if id:
+        return JSONResponse(content={"message": "Champ created", 'champ_id': id}, status_code=201)
+    else:
+        raise HTTPException(status_code=409, detail={'errors': "Championat already exists.", 'champ': dict(championship)})
 
 @router.get("/championships/")
 async def read_championships(season_id: int, champ: ChampionshipRepository = Depends(get_championship_repository)):
