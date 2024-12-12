@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main   # Запускать при изменении в ветке main
-  pull_request:
-    branches:
-      - main   # Запускать при pull запросах в ветку main
+  #pull_request:
+    #branches:
+     # - main   # Запускать при pull запросах в ветку main
 
 jobs:
   build:
@@ -39,9 +39,8 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /path/to/your/app
+            cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi
             git pull origin main
-            docker-compose down
-            docker-compose up -d --build
+            docker run -d -p 8000:8000 varkkosh/goalstatapi:1.0
           EOF
 

@@ -12,7 +12,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем остальное приложение
-COPY . .
+COPY ./app .
+# Копируем сертификаты
+COPY /certs/* /etc/ssl/certs/
 
 # Указываем команду запуска
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
