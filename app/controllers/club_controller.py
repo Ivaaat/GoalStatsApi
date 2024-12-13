@@ -13,7 +13,7 @@ router = APIRouter()
 async def create_club(club: Club, rep: ClubRepository = Depends(get_club_repository)):
     id = await rep.create(club)
     if id:
-        return JSONResponse(content={"message": "Club created", 'club_id': id}, status_code=201)
+        return JSONResponse(content={"message": "Club created", "detail": {"club": dict(club)}}, status_code=201)
     else:
         raise HTTPException(status_code=409, detail={"error": "Club already exists.", "club": dict(club)})
 

@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import re
 import asyncpg
 import asyncio
+from asyncio import Semaphore
 import aiofiles
 import aiohttp
 import ssl
@@ -19,7 +20,7 @@ import random
 import requests
 import os
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict
 import json
 from dotenv import load_dotenv
@@ -38,6 +39,21 @@ MAX_RETRIES = 5
 RETRY_DELAY = 30
 SLEEP = 1
 
+def generate_date_range(end_date_str):
+    # Преобразование строковой даты в объект datetime
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    start_date = datetime.now()
+
+    # Инициализация списка для хранения дат
+    date_range = []
+
+    # Генерация дат от текущей до конечной
+    current_date = start_date
+    while current_date <= end_date:
+        date_range.append(current_date.strftime('%Y-%m-%d'))  # Добавление даты в нужном формате
+        current_date += timedelta(days=1)  # Переход к следующему дню
+
+    return date_range
 
 class UpdateStrategy(ABC):
     @abstractmethod
@@ -45,34 +61,41 @@ class UpdateStrategy(ABC):
         """Метод, который должен реализовываться в каждой стратегии для обновления данных."""
         pass
 
+    async def get(date:str, semaphore:Semaphore):
+        async with semaphore:
+            async with aiohttp.ClientSession() as session:
+                async with session.get('{}{}'.format(INITIAL_LINK, date)) as response:
+                    if response.status:
+                        result = await response.json()
+                        if result.get('matches'):
+                            DateUpdateStrategy.data[date] = result['matches']['football']
+
 class DateUpdateStrategy(UpdateStrategy):
     data: Dict = {}
 
     @classmethod
-    def update(cls, date: str, strategy: str):
+    async def update(cls, date: str, strategy: str, semaphore:Semaphore):
         try:
             if strategy == 'day':
-                date_update =  datetime.strptime(date, '%Y-%m-%d')
-                data = DateUpdateDay.update(date)
+                datetime.strptime(date, '%Y-%m-%d')
+                await DateUpdateDay.update(date)
             elif strategy == 'range':
-                date_start = datetime.strptime(date[:10], '%Y-%m-%d')
-                date_end = datetime.strptime(date[-10:], '%Y-%m-%d')
+                datetime.strptime(date[:10], '%Y-%m-%d')
+                datetime.strptime(date[-10:], '%Y-%m-%d')
                 data = DateUpdateRange.update(date[:10], date[-10:])
             elif strategy == 'toDay':
-                
-                data = DateUpdateToDay.update(date)
+                await DateUpdateToDay.update(date, semaphore)
             else:
-                data = DateUpdateAll.update()
+                await  DateUpdateAll.update()
         except ValueError:
             return print('Неверный формат даты')
-        return data
 
 
 class DateUpdateAll(DateUpdateStrategy):
     date: str = '1990-01-20'
 
     @classmethod
-    def update(cls):
+    async def update(cls):
         date_start = sess.get('{}{}'.format(INITIAL_LINK, cls.date)).json()
         date_fetch = date_start['nav']['next']['date']
         flag = date_start['nav']['next']
@@ -80,7 +103,7 @@ class DateUpdateAll(DateUpdateStrategy):
             try:
                 time.sleep(random.uniform(0.5, 2))
                 try:
-                    data = sess.get('{}{}'.format(INITIAL_LINK, date_fetch)).json()
+                    data = await cls.get(date_fetch)
                 except Exception as e:
                     return
                 flag = data['nav']['next']
@@ -94,7 +117,7 @@ class DateUpdateAll(DateUpdateStrategy):
 class DateUpdateDay(DateUpdateStrategy):
 
     @staticmethod
-    def update(date: str):
+    async def update(date: str):
         try:
             data = sess.get('{}{}'.format(INITIAL_LINK, date)).json()
         except Exception as e:
@@ -106,34 +129,41 @@ class DateUpdateDay(DateUpdateStrategy):
 class DateUpdateToDay(DateUpdateStrategy):
 
     @staticmethod
-    def update(date: str):
-        today = datetime.today()
-        today_str = today.date()
-        date_update =  datetime.strptime(date, '%Y-%m-%d')
-        direction = 'next'
-        if today > date_update:
-            direction = 'prev'
-        data_today = sess.get('{}{}'.format(INITIAL_LINK, today_str)).json()
-        date_fetch = data_today['nav'][direction]['date']
-        if data_today['matches']['football']:
-            DateUpdateStrategy.data[str(today_str)] = data_today['matches']['football']
-        date_to =  datetime.strptime(date_fetch, '%Y-%m-%d')
-        conditions = date_to >= date_update if direction == 'prev' else date_to <= date_update
-        while conditions:
-            #time.sleep(random.uniform(0.5, 2))
-            try:
-                data = sess.get('{}{}'.format(INITIAL_LINK, date_fetch)).json()
-            except Exception as e:
-                return
-            date_fetch = data['nav'][direction]['date']
-            date_to =  datetime.strptime(date_fetch, '%Y-%m-%d')
-            if data['matches']['football']:
-                DateUpdateStrategy.data[date_fetch] = data['matches']['football']
-            conditions = date_to >= date_update if direction == 'prev' else date_to <= date_update
+    async def update(date: str, semaphore:Semaphore):
+        dates = generate_date_range(date)
+        await asyncio.gather(*[UpdateStrategy.get(date_up, semaphore) for date_up in dates])
+        
+
+        # today = datetime.today()
+        # today_str = today.date()
+        # date_update =  datetime.strptime(date, '%Y-%m-%d')
+        # direction = 'next'
+        # if today > date_update:
+        #     direction = 'prev'
+        # #data_today = sess.get('{}{}'.format(INITIAL_LINK, today_str)).json()
+        #data_today = await UpdateStrategy.get(today_str)
+        # date_fetch = data_today['nav'][direction]['date']
+        # if data_today['matches']['football']:
+        #     DateUpdateStrategy.data[str(today_str)] = data_today['matches']['football']
+        # date_to =  datetime.strptime(date_fetch, '%Y-%m-%d')
+        # conditions = date_to >= date_update if direction == 'prev' else date_to <= date_update
+        # while conditions:
+        #     #time.sleep(random.uniform(0.5, 2))
+        #     try:
+        #         #data = sess.get('{}{}'.format(INITIAL_LINK, date_fetch)).json()
+        #         data = await UpdateStrategy.get(date_fetch)
+        #         date_prev = date_fetch
+        #     except Exception as e:
+        #         return
+        #     date_fetch = data['nav'][direction]['date']
+        #     date_to =  datetime.strptime(date_fetch, '%Y-%m-%d')
+        #     if data['matches']['football']:
+        #         DateUpdateStrategy.data[date_prev] = data['matches']['football']
+        #     conditions = date_to >= date_update if direction == 'prev' else date_to <= date_update
 
 
 class DateUpdateRange(DateUpdateStrategy):
-    def update(date: str):
+    async def update(date: str):
         pass
 
 
@@ -179,18 +209,19 @@ class ChampPrepare(StatPrepare):
 
     async def prepare(self, data: str):
         translator = Translator()
-        translator.translate(data['name_tournament'].lower().replace(' ', '_'), dest='en')
+        name = data.get('name_tournament') if data.get('name_tournament') else data.get('name')
+        translator.translate(name.lower().replace(' ', '_'), dest='en')
         season = ['', '']
         async with aiohttp.ClientSession() as session:
             async with session.get('{}{}'.format(MAIN_LINK, data['link'])) as response:
         #response = sess.get('{}{}'.format(MAIN_LINK, data['link']))
-                if response.status_code == 200:
+                if response.status == 200:
                     text = await response.text()
                     pattern = r"<script>document\.write\('<div>(.*)</div>'\)</script>"
                     match = re.search(pattern, text)
                     season = match.group(1).split('—')
         self.data = {
-            'name': data['name_tournament'],
+            'name': name,
             'country': None,
             'priority': data['priority'],
             'img': data['img'],
@@ -201,7 +232,7 @@ class ChampPrepare(StatPrepare):
             'start_date': season[0],
             'end_date': season[1],
             'is_cup': None,
-            'alias': translator.translate(data['name_tournament']).text.lower().replace(' ', '_')}
+            'alias': translator.translate(name).text.lower().replace(' ', '_')}
 
 
 class MatchPrepare(StatPrepare):
@@ -209,8 +240,13 @@ class MatchPrepare(StatPrepare):
     def __init__(self) -> None:
         self.data: dict = {}
 
-    def prepare(self, data: List[Dict], id_old_champ: str, date: str):
+    async def prepare(self, data: List[Dict], id_old_champ: str, date: str):
         for match in data:
+           score = match.get('score')
+           totalHome = totalAway = None
+           if score:
+               totalHome = score.get('totalHome', None)
+               totalAway = score.get('totalAway', None)
            self.data[match['id']] = {"old_id": match['id'],
             "section": match["section"],
             "link": match.get("link"),
@@ -221,8 +257,8 @@ class MatchPrepare(StatPrepare):
             "status": match.get("status"),
             "pub_date":match.get("pub_date"),
             "score": match.get("score"),
-            "total_home": match.get("total_home"),
-            "total_away": match.get("total_away"),
+            "total_home": totalHome,
+            "total_away": totalAway,
             "roundforltandmc": match.get("roundforltandmc"),
             "tour": match.get("tour"),
             "periods": match.get("periods"),
@@ -252,80 +288,85 @@ class DatePost(StatPost):
         async with aiohttp.ClientSession() as session:
             async with session.post(f'{DOMAIN}/api/matches/{data}', json=data) as response:
                 response.raise_for_status()  # Проверка на ошибки HTTP
-                DatePost.dates.update(response.json())   # Предполагается, что ответ в формате JSON
-        #response =  sess.post(f'http://127.0.0.1:8000/api/matches/{data}').json()
+                DatePost.dates.update(await response.json())   # Предполагается, что ответ в формате JSON
         
 
 
 class SeasonPost(StatPost):
 
     @classmethod
-    def update(сls, data: str):
-        sess.post('{DOMAIN}/api/seasons/', json = data)
-        
-
-class TeamPost(StatPost):
-    clubs: List[Dict] = {}
-
-    @classmethod
-    def update(сls, data: str):
-        for team in data.values():
-            response = sess.post('{DOMAIN}/api/clubs/', json = team).json()
-            if response['detail'].get('club'):
-                TeamPost.clubs[response['detail']['club']['old_id']] = response['detail']['club']
+    async def update(сls, data: str):
+        async with aiohttp.ClientSession() as session:
+            await session.post(f'{DOMAIN}/api/seasons/', json = data)
 
 
 class ChampPost(StatPost):
     champ: List[Dict] = {}
 
     @classmethod
-    def update(сls, data: str):
-        response = sess.post(f'{DOMAIN}/api/championships/', json = data).json()
-        response['detail']['champ']
-        ChampPost.champ[response['detail']['champ']['old_id']] = response['detail']['champ']
-        
-        
+    async def update(сls, data: str):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f'{DOMAIN}/api/championships/', json = data) as response:
+                resp = await response.json()
+                ChampPost.champ[resp['detail']['champ']['old_id']] = resp['detail']['champ']
+
+
+class TeamPost(StatPost):
+    clubs: List[Dict] = {}
+
+    @classmethod
+    async def update(сls, data: Dict):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f'{DOMAIN}/api/clubs/', json = data) as response:
+                resp = await response.json()
+                if resp['detail'].get('club'):
+                    TeamPost.clubs[resp['detail']['club']['old_id']] = resp['detail']['club']
+
+
 class MatchPost(StatPost):
     
     @classmethod
-    def update(сls, data: Dict):
-        for match in data.values():
-            response = sess.put('{DOMAIN}/api/matches/', json = match)
-            if response.status_code == 404:
-                sess.post(f'{DOMAIN}/api/matches/', json = match)
+    async def update(сls, data: Dict):
+        async with aiohttp.ClientSession() as session:
+            async with session.put(f'{DOMAIN}/api/matches/', json = data) as response:
+                resp = await response.json()
+                if response.status == 404:
+                    sess.post(f'{DOMAIN}/api/matches/', json = data)
+                elif response.status == 422:
+                    print()
 
 class Updater:
-    def __init__(self, season: SeasonPrepare, champ: ChampPrepare, team: TeamPrepare, matches:MatchPrepare, data: Dict):
-        self.season = season
-        self.champ = champ
-        self.team = team
-        self.matches = matches
+    def __init__(self, data: Dict):
         self.data = data
 
     async def update(self):
+        tasks = [DatePost.update(date_update) for date_update in list(self.data.keys())]
+        await asyncio.gather(*tasks)
         for date, stat in self.data.items():
-            #season_stat, champ_stat, team_stat, match_stat = self.season.prepare(stat),self.champ.prepare(stat), self.team.prepare(stat), self.matches.prepare(stat)
-            #season_stat = self.season.prepare(stat)
-            await DatePost.update(date)
             for tournaments in stat['tournaments'].values():
-                self.season.prepare(tournaments)
-                #SeasonPost.update(self.season.data)
-                self.champ.prepare(tournaments)
-                ChampPost.update(self.champ.data)
-                self.team.prepare(tournaments['matches'])
-                TeamPost.update(self.team.data)
-                self.matches.prepare(tournaments['matches'], tournaments['id'], date)
-                MatchPost.update(self.matches.data)
+                self.season, self.champ, self.team, self.matches = SeasonPrepare(), ChampPrepare(), TeamPrepare(), MatchPrepare() 
+                await asyncio.gather(*[self.season.prepare(tournaments), self.champ.prepare(tournaments), self.team.prepare(tournaments['matches'])])
+                tasks = []
+                tasks.append(SeasonPost.update(self.season.data))
+                tasks.append(ChampPost.update(self.champ.data))
+                tasks.extend([TeamPost.update(team) for team in self.team.data.values()])
+                await asyncio.gather(*tasks)
+                await self.matches.prepare(tournaments['matches'], tournaments['id'], date)
+                await asyncio.gather(*[MatchPost.update(match) for match in self.matches.data.values()])
+            print("Update {}".format(date))
+        
 
                 
+async def main():
+    semaphore = asyncio.Semaphore(3)
+    await DateUpdateStrategy.update(date = '2025-02-05', strategy = 'toDay', semaphore = semaphore)
+    #await DateUpdateStrategy.update(date = '2024-12-30', strategy = 'day', semaphore = semaphore)
+    updater = Updater(DateUpdateStrategy.data)
+    await updater.update()
 
-
-#DateUpdateStrategy.update(date = '2024-09-10', strategy = 'toDay')
-DateUpdateStrategy.update(date = '2024-12-07', strategy = 'day')
-
-updater = Updater(SeasonPrepare(), ChampPrepare(), TeamPrepare(), MatchPrepare(), DateUpdateStrategy.data)
-
-asyncio.run(updater.update())
+start = time.time()
+asyncio.run(main())
+print(time.time() - start)
 
 
 
