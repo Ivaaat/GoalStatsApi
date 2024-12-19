@@ -5,6 +5,8 @@ from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 from controllers import season_router, championship_router, club_router, player_router, statistics_router, match_router
 from db import lifespan
+import os
+
 
 
 app = FastAPI(lifespan=lifespan)
@@ -26,8 +28,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Инициализация шаблонов
-templates = Jinja2Templates(directory="templates/")
+base_dir = os.path.dirname(os.path.abspath(__file__)) 
+templates_dir = os.path.join(base_dir, "templates")
+templates = Jinja2Templates(directory=templates_dir)
 
 
 @app.get("/", response_class=HTMLResponse)

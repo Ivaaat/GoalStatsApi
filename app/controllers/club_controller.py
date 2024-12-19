@@ -19,8 +19,8 @@ async def create_club(club: Club, rep: ClubRepository = Depends(get_club_reposit
 
 
 @router.get("/clubs/")
-async def read_clubs(championshipId: int, club: ClubRepository = Depends(get_club_repository)):
-    clubs = await club.get_all(championshipId)
+async def read_clubs(championship_id: int, club: ClubRepository = Depends(get_club_repository)):
+    clubs = await club.get_all(championship_id)
     if clubs:
         return JSONResponse(content = clubs)
     else:

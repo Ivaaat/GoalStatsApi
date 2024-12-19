@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from models import Championship
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from dependencies import get_championship_repository
 from repositories import ChampionshipRepository
 
@@ -17,30 +17,36 @@ async def create_championship(championship: Championship, rep: ChampionshipRepos
 
 
 @router.get("/championships/")
-async def read_championships(season_id: int, champ: ChampionshipRepository = Depends(get_championship_repository)):
-    championships = await champ.get_all(season_id)
+async def read_championships(season_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
+    championships = await rep.get_all(season_id)
     if championships:
         return JSONResponse(content = championships)
     else:
         raise HTTPException(status_code=404, detail="Championships not found")
     
 
-@router.get("/championships/{championship_id}")
-async def read_championship(championship_id: int, champ: ChampionshipRepository = Depends(get_championship_repository)):
-    championship = await champ.get(championship_id)
+@router.get("/championships/{championship_id}", response_model=Championship)
+async def read_championship(championship_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
+    championship = await rep.get(championship_id)
     if championship:
-        return JSONResponse(content = championship)
+        return JSONResponse(content = dict(championship))
     else:
         raise HTTPException(status_code=404, detail=f"championship_id = {championship_id}  not found")
 
 
 @router.put("/championships/{championship_id}")
-async def update_championship(championship: Championship, conn=Depends(get_championship_repository)):
+async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
+    # Логика обновления чемпионата
+    pass
+
+
+@router.patch("/championships/{championship_id}")
+async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
     # Логика обновления чемпионата
     pass
 
 
 @router.delete("/championships/{championship_id}")
-async def delete_championship(championship_id: int):
+async def delete_championship(championship_id: int, rep: ChampionshipRepository=Depends(get_championship_repository)):
     # Логика удаления чемпионата
     pass

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import JSONResponse
 from dependencies import get_season_repository
 from repositories import SeasonRepository
 from models import Season
+import asyncpg
 
 router = APIRouter()
 
@@ -15,25 +16,40 @@ async def create_season(season: Season, rep: SeasonRepository = Depends(get_seas
         raise HTTPException(status_code=409, detail="Season already exists.")
 
 
-@router.get("/seasons/")
-async def read_season(season: SeasonRepository = Depends(get_season_repository)):
+@router.get("/seasons/", response_model=list[Season])
+async def get_seasons(season: SeasonRepository = Depends(get_season_repository)):
     seasons = await season.get_all()
     if seasons:
         return JSONResponse(content = seasons)
     else:
         raise HTTPException(status_code=404, detail="Seasons not found")
 
-@router.get("/seasons/{season_id}")
-async def read_season(season_id: int):
-    # Логика получения чемпионата по ID
-    pass
 
-@router.put("/seasons/{season_id}")
-async def update_season(season_id: int, season_info: dict):
-    # Логика обновления чемпионата
-    pass
+@router.get("/seasons/{season_id}", response_model=Season)
+async def get_season(season_id: int, rep: SeasonRepository = Depends(get_season_repository)) :
+    season = await rep.get(season_id)
+    if season:
+        return JSONResponse(content = dict(season))
+    else:
+        raise HTTPException(status_code=404, detail="Season not found")
+
+
+@router.put("/seasons/", response_model=Season)
+async def update_season(season: Season, rep: SeasonRepository = Depends(get_season_repository)):
+    try:
+        id = await rep.update(season)
+    except asyncpg.exceptions.UniqueViolationError:
+        raise HTTPException(status_code=409, detail={'errors': "Season already exists.", 'season_name': season.name})
+    if id:
+        return JSONResponse(content={"message": "Season update", 'season': dict(season)}, status_code=200)
+    else:
+        raise HTTPException(status_code=404, detail={'errors': "Season not found.", 'season_id': season.id})
+
 
 @router.delete("/seasons/{season_id}")
-async def delete_season(season_id: int):
-    # Логика удаления чемпионата
-    pass
+async def delete_season(season_id: int, rep: SeasonRepository = Depends(get_season_repository)):
+    id = await rep.delete(season_id)
+    if id:
+        return Response(status_code=204)
+    else:
+        raise HTTPException(status_code=404, detail={'errors': "Season not found.", 'season_id': season_id})
