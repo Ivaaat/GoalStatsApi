@@ -26,6 +26,7 @@ class ChampionshipRepository:
                                     championat.country,
                                     championat.alias,
                                     id_champ)
+        championat.id = id
         return id
 
     async def get_all(self, season_id):

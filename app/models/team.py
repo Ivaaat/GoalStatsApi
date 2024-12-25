@@ -3,7 +3,7 @@ from typing import Optional
 
 
 
-class Club(BaseModel):
+class Team(BaseModel):
     id: Optional[int] = None
     name: str
     icon: Optional[str] = None

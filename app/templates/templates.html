@@ -187,8 +187,8 @@
                     </select>
                 </div>
                 <div class="col">
-                    <label for="league" class="form-label">Чемпионат</label>
-                    <select id="league" class="form-select" name="league">
+                    <label for="champ" class="form-label">Чемпионат</label>
+                    <select id="champ" class="form-select" name="champ">
                         <option value="">Выберите чемпионат</option>
                         <!-- Здесь будут опции для чемпионатов -->
                     </select>
@@ -197,8 +197,8 @@
 
             <div class="row mb-3">
                 <div class="col">
-                    <label for="club" class="form-label">Клуб</label>
-                    <select id="club" class="form-select" name="club">
+                    <label for="team" class="form-label">Клуб</label>
+                    <select id="team" class="form-select" name="team">
                         <option value="">Выберите клуб</option>
                         <!-- Здесь будут опции для клубов -->
                     </select>
@@ -214,8 +214,8 @@
 
             <div class="row mb-3">
                 <div class="col">
-                    <label for="club-search" class="form-label">Поиск клуба:</label>
-                    <input type="text" id="club-search" class="form-control" placeholder="Введите название клуба"  autocomplete="off" />
+                    <label for="team-search" class="form-label">Поиск клуба:</label>
+                    <input type="text" id="team-search" class="form-control" placeholder="Введите название клуба"  autocomplete="off" />
                      <ul id="results"></ul>
                     <div id="no-results">Совпадений не найдено.</div>
                     <div id="loader">Загрузка...</div>
@@ -262,8 +262,8 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
     <script>
-        //const DOMAIN = 'https://127.0.0.1:8000'
-        const DOMAIN = 'https://www.goalstatsapi.ru'
+        const DOMAIN = 'http://127.0.0.1:8000'
+        // const DOMAIN = 'https://www.goalstatsapi.ru'
         document.getElementById('search-form').addEventListener('submit', function(event) {
             event.preventDefault();
             // Здесь будет логика отправки формы и отображения результатов
@@ -334,43 +334,43 @@
             return await response.json();
         }
 
-        async function fetchStatisticsSeasonId(season_id) { 
-            const response = await fetch(`${DOMAIN}/api/statistics/?season_id=${season_id}`);
+        async function fetchStatisticsSeasonId(seasonId) { 
+            const response = await fetch(`${DOMAIN}/api/statistics/?season_id=${seasonId}`);
             return await response.json();
         }
 
-        async function fetchChampionships(season_id) {
-            const response = await fetch(`${DOMAIN}/api/championships/?season_id=${season_id}`);
+        async function fetchChampionships(seasonId) {
+            const response = await fetch(`${DOMAIN}/api/championships/?season_id=${seasonId}`);
             return await response.json();
         }
 
-        async function fetchChampionshipId(championship_id) {
-            const response = await fetch(`${DOMAIN}/api/statistics/?championship_id=${championship_id}`);
+        async function fetchChampionshipId(championshipId) {
+            const response = await fetch(`${DOMAIN}/api/statistics/?championship_id=${championshipId}`);
             return await response.json();
         }
 
-        async function fetchClubs(championshipId) {
-            const response = await fetch(`${DOMAIN}/api/clubs/?championshipId=${championshipId}`);
+        async function fetchTeams(championshipId) {
+            const response = await fetch(`${DOMAIN}/api/teams/?championship_id=${championshipId}`);
             return await response.json();
         }
         
-        async function fetchStatisticsClubId(club_id) {
-            const response = await fetch(`${DOMAIN}/api/clubs/${club_id}/statistics`);
+        async function fetchStatisticsTeamId(teamId) {
+            const response = await fetch(`${DOMAIN}/api/teams/${teamId}/statistics`);
             return await response.json();
         }
 
-        async function fetchAllClubs() {
-            const response = await fetch('/api/clubs'); // Отправляем запрос на получение всех клубов
+        async function fetchAllTeams() {
+            const response = await fetch('/api/teams'); // Отправляем запрос на получение всех клубов
             return await response.json();
         }
         
-        async function fetchClub(query) {
-            const response = await fetch(`/api/clubs/search/?query=${encodeURIComponent(query)}`);
+        async function fetchTeam(query) {
+            const response = await fetch(`/api/teams/search/?query=${encodeURIComponent(query)}`);
             return await response.json();
         }
 
-        async function fetchAllStatClub(clubName) {
-            const response = await fetch(`${DOMAIN}/api/statistics/?club_name=${clubName}`);
+        async function fetchAllStatTeam(teamName) {
+            const response = await fetch(`${DOMAIN}/api/statistics/?team_name=${teamName}`);
             return await response.json();
         }
 
@@ -395,7 +395,7 @@
             const seasonId = sessionStorage.getItem(season);
            //const championships = await fetchChampionships(seasonId);
             const championships = await fetchChampionships(seasonId);
-            const championshipSelect = document.getElementById('league');
+            const championshipSelect = document.getElementById('champ');
             championshipSelect.innerHTML = ''; // Очистка предыдущих опций
             championships.forEach(championship => {
                 sessionStorage.setItem(championship['name'], parseInt(championship['id']) );
@@ -405,47 +405,39 @@
                 championshipSelect.appendChild(option);
             });
             // Загрузить клубы, когда будут выбраны чемпионаты
-            await updateClubs();
+            await updateTeams();
         }
 
-        async function updateClubs() {
-            const championshipSelect = document.getElementById('league');
+        async function updateTeams() {
+            const championshipSelect = document.getElementById('champ');
             const championship = championshipSelect.value;
             const season = document.getElementById('season').value;
-
-            // const clubs = await fetchClubs(championship, season);
             const championshipId = sessionStorage.getItem(championship);
-            const clubs = await fetchClubs(championshipId);
-            const clubSelect = document.getElementById('club');
-            const clubSearch = document.getElementById('club-search');
-            clubSelect.innerHTML = '';
-            clubs.forEach(club => {
-                sessionStorage.setItem(club['name'], parseInt(club['id']) );
+            const teams = await fetchTeams(championshipId);
+            const teamSelect = document.getElementById('team');
+            const teamSearch = document.getElementById('team-search');
+            teamSelect.innerHTML = '';
+            teams.forEach(team => {
+                sessionStorage.setItem(team['name'], parseInt(team['id']) );
                 const option = document.createElement('option');
-                option.value = club['name'];
-                option.textContent = club['name'];
-                clubSelect.appendChild(option);
+                option.value = team['name'];
+                option.textContent = team['name'];
+                teamSelect.appendChild(option);
             });
             // Выбор последнего клуба и обновление статистики
-            if (clubs.length > 0) {
-                // clubSelect.value = clubs[clubs.length - 1]; // Выбор последнего клуба
-                clubSelect.value = clubs[0]['name']; // Выбор последнего клуба
+            if (teams.length > 0) {
+                teamSelect.value = teams[0]['name']; // Выбор последнего клуба
                 await updateStatistics(); // Автоматически обновляем статистику клуба
             }
-
-            // Очищаем поле поиска клуба и обновляем его дропдаун
-            clubSearch.value = '';
-            //searchClubs(); // Обновляем список клубов в datalist
+            teamSearch.value = '';
         }
 
         async function updateStatistics() {
-            const season = document.getElementById('season').value;
-            const league = document.getElementById('league').value;
-            const club = document.getElementById('club').value;
-            if (club) {
+            const team = document.getElementById('team').value;
+            if (team) {
 
-                const clubId = sessionStorage.getItem(club);
-                const statistics = await fetchStatisticsClubId(clubId);
+                const teamId = sessionStorage.getItem(team);
+                const statistics = await fetchStatisticsTeamId(teamId);
                 document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
                 // Обновляем подсветку синтаксиса
                 hljs.highlightElement(document.getElementById('statistics'));
@@ -456,18 +448,17 @@
         }
         
         async function updateSelect(query) {
-            
             searchInput.value = query;
             resultsList.innerHTML = '';
             resultsList.style.display = 'none';
             noResultsDiv.style.display = 'none';
-            const statClub = await fetchAllStatClub(query);
+            const statTeam = await fetchAllStatTeam(query);
             
             const seasonSelect = document.getElementById('season');
             seasonSelect.innerHTML = ''; // Очистка предыдущих опций
             sessionStorage.clear() 
-            sessionStorage.setItem('seasons',JSON.stringify(statClub));
-            const sortedKeys = Object.keys(statClub).sort();
+            sessionStorage.setItem('seasons',JSON.stringify(statTeam));
+            const sortedKeys = Object.keys(statTeam).sort();
             
             sortedKeys.reverse().forEach(key => {
                 const option = document.createElement('option');
@@ -475,7 +466,7 @@
                 option.textContent = key;
                 seasonSelect.appendChild(option);
             });
-            const champ =  document.getElementById('league')
+            const champ =  document.getElementById('champ')
             champ.innerHTML = ''
             // let optionDef = document.createElement('option');
             // optionDef.value = 'Выберите чемпионат';
@@ -484,7 +475,7 @@
             const season = document.getElementById('season').value;
             let oneChamp = ''
             let isOne = true 
-            Object.keys(statClub[season]).forEach(champName => {
+            Object.keys(statTeam[season]).forEach(champName => {
                 if (isOne) {
                     oneChamp = champName
                     isOne = false
@@ -494,26 +485,26 @@
                 option.textContent = champName;
                 champ.appendChild(option);
             });
-            let club = document.getElementById('club')
-            club.innerHTML = ''
+            let team = document.getElementById('team')
+            team.innerHTML = ''
             let optionQuery = document.createElement('option');
             optionQuery.value = query;
             optionQuery.textContent = query;
-            club.appendChild(optionQuery) ;
-            getStatistics(statClub[season][oneChamp])
+            team.appendChild(optionQuery) ;
+            getStatistics(statTeam[season][oneChamp])
 
             document.getElementById('season').removeEventListener('change', updateChampionships);
-            document.getElementById('league').removeEventListener('change', updateClubs);
-            document.getElementById('club').removeEventListener('change', updateStatistics);
+            document.getElementById('champ').removeEventListener('change', updateTeams);
+            document.getElementById('team').removeEventListener('change', updateStatistics);
 
             document.getElementById('season').addEventListener('change', changeSeason);
-            document.getElementById('league').addEventListener('change', changeLeague);
+            document.getElementById('champ').addEventListener('change', changeChamp);
         }
 
         async function changeSeason() {
             const season = document.getElementById('season').value;
             const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
-            const champSelect = document.getElementById('league');
+            const champSelect = document.getElementById('champ');
             champSelect.innerHTML = ''
             let oneChamp = ''
             let isOne = true 
@@ -531,35 +522,34 @@
         }
 
         async function getStatistics(query) {
-            const statistics = await fetchStatisticsClubId(query);
+            const statistics = await fetchStatisticsTeamId(query);
             document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
         }
 
-        async function changeLeague(query) {
+        async function changeChamp(query) {
             const season = document.getElementById('season').value;
             const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
-            const champ = document.getElementById('league').value;
-            console.log(seasonStat[season][champ])
+            const champ = document.getElementById('champ').value;
             getStatistics(seasonStat[season][champ])
             
         }
 
         let lastTime = 0;
-        async function searchClubs() {
+        async function searchTeams() {
             const currentTime = Date.now();
             const timeDiff = currentTime - lastTime;
 
             if (timeDiff < 300) return; // Лимит: 300 мс
             lastTime = currentTime;
-            const query = document.getElementById('club-search').value.toLowerCase();
+            const query = document.getElementById('team-search').value.toLowerCase();
             if (!query) {
                 document.getElementById('results').innerHTML = ''; // Очищаем предложения, если запрос пустой
                 return;
             }
-            const filteredClubs = await fetchClub(query)
+            const filteredTeams = await fetchTeam(query)
             resultsList.innerHTML = '';
-            if (filteredClubs.length > 0) {
-                filteredClubs.forEach(item => {
+            if (filteredTeams.length > 0) {
+                filteredTeams.forEach(item => {
                     const li = document.createElement('li');
                     li.innerHTML = highlightMatches(item, query);
                     li.addEventListener('click', () => updateSelect(item));
@@ -574,19 +564,19 @@
             
 
             // Если при вводе только одно совпадение, обновляем выбор клуба
-            if (filteredClubs.length === 1) {
-                document.getElementById('club-search').value = filteredClubs[0];
-                document.getElementById('club').value = filteredClubs[0];
+            if (filteredTeams.length === 1) {
+                document.getElementById('team-search').value = filteredTeams[0];
+                document.getElementById('team').value = filteredTeams[0];
                 await updateStatistics();
             }
         }
 
-        function selectClub() {
-            const selectedClub = document.getElementById('club-search').value;
-            document.getElementById('club').value = selectedClub;
+        function selectTeam() {
+            const selectedTeam = document.getElementById('team-search').value;
+            document.getElementById('team').value = selectedTeam;
             updateStatistics();
             // Очистка поля для поиска по клубам
-            document.getElementById('club-search').value = '';
+            document.getElementById('team-search').value = '';
             document.getElementById('results').innerHTML = ''; // Очищаем список предложений
         }
         async function main(){
@@ -596,11 +586,11 @@
             });
             await updateSeasons(); // Загружаем сезоны
             document.getElementById('season').addEventListener('change', updateChampionships);
-            document.getElementById('league').addEventListener('change', updateClubs);
-            document.getElementById('club').addEventListener('change', updateStatistics);
+            document.getElementById('champ').addEventListener('change', updateTeams);
+            document.getElementById('team').addEventListener('change', updateStatistics);
 
             document.getElementById('season').removeEventListener('change', changeSeason);
-            document.getElementById('league').removeEventListener('change', changeLeague);
+            document.getElementById('champ').removeEventListener('change', changeChamp);
             //document.getElementById('club-search').addEventListener('input', searchClubs);
             // await fetchClubs();
 
@@ -610,7 +600,7 @@
         // Вызываем функцию после загрузки страницы
         window.onload = main()
 
-        const searchInput = document.getElementById('club-search');
+        const searchInput = document.getElementById('team-search');
         const resultsList = document.getElementById('results');
         const noResultsDiv = document.getElementById('no-results');
         const loader = document.getElementById('loader');
@@ -646,7 +636,7 @@
                     return;
                 }
 
-                searchClubs(query);
+                searchTeams(query);
             }, 300);
         });
 
@@ -681,14 +671,14 @@
                     clearTimeout(debounceTimer);
                     previousValue = searchInput.value; // Обновляем последнее значение
                     searchInput.value = searchInput.value.slice(0, -1); // Удаление последнего символа
-                    searchClubs(searchInput.value); // Обновление результатов поиска
+                    searchTeams(searchInput.value); // Обновление результатов поиска
                 }
                 if (!backspaceHoldTimer) {
                     backspaceHoldTimer = setInterval(() => {
                         searchInput.value = searchInput.value.slice(0, -1); // Удаление последнего символа
                         if (searchInput.value !== previousValue) {
                             previousValue = searchInput.value;
-                            searchClubs(searchInput.value);
+                            searchTeams(searchInput.value);
                         }
                     }, 100);
                 }

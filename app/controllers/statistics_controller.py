@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from dependencies import get_stat_repository, get_club_repository
-from repositories import StatisticsRepository, ClubRepository
+from dependencies import get_stat_repository, get_team_repository
+from repositories import StatisticsRepository, TeamRepository
 from models import Season
 import json
 
@@ -61,21 +61,20 @@ async def read_statistics_championship(championship_id: int):
 
 # Получение статистики по клубу
 @router.get("/statistics/")
-async def read_statistics_club(club_name: str, stat: StatisticsRepository = Depends(get_stat_repository)):
-    club_stat = await stat.get_club(club_name)
-    club_ret = {}
-    for club in club_stat:
-        club_st = dict(club)
-        club_ret[club_st['season_name']] = json.loads(club_st['champ_name_id_team'])
-
-
-    if club_ret:
-        return JSONResponse(content = club_ret)
-    raise HTTPException(status_code=404, detail="Club not found")
+async def read_statistics_club(team_name: str, stat: StatisticsRepository = Depends(get_stat_repository)):
+    team_stat = await stat.get_team(team_name)
+    team_ret = {}
+    for team in team_stat:
+        club_st = dict(team)
+        team_ret[club_st['season_name']] = json.loads(club_st['champ_name_id_team'])
+    if team_ret:
+        return JSONResponse(content = team_ret)
+    else:
+        raise HTTPException(status_code=404, detail="Club not found")
 
 # Получение статистики по клубу
 @router.get("/statistics/{season_id}")
-async def read_statistics_club(club_id: int, club: ClubRepository = Depends(get_club_repository)):
+async def read_statistics_club(club_id: int, club: TeamRepository = Depends(get_team_repository)):
     club_stat = await club._get(club_id)
     if club_stat:
         return JSONResponse(content = club_stat)
