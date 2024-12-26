@@ -182,14 +182,12 @@
                 <div class="col">
                     <label for="season" class="form-label">Сезон</label>
                     <select id="season" class="form-select" name="season">
-                        <option value="">Выберите сезон</option>
                         <!-- Здесь будут опции для сезонов -->
                     </select>
                 </div>
                 <div class="col">
                     <label for="champ" class="form-label">Чемпионат</label>
                     <select id="champ" class="form-select" name="champ">
-                        <option value="">Выберите чемпионат</option>
                         <!-- Здесь будут опции для чемпионатов -->
                     </select>
                 </div>
@@ -199,7 +197,6 @@
                 <div class="col">
                     <label for="team" class="form-label">Клуб</label>
                     <select id="team" class="form-select" name="team">
-                        <option value="">Выберите клуб</option>
                         <!-- Здесь будут опции для клубов -->
                     </select>
                 </div>
@@ -262,8 +259,31 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
     <script>
-        const DOMAIN = 'http://127.0.0.1:8000'
-        // const DOMAIN = 'https://www.goalstatsapi.ru'
+        // const DOMAIN = 'http://127.0.0.1:8000'
+        const DOMAIN = 'https://www.goalstatsapi.ru'
+        const defSelectSeasonOption = document.createElement('option');
+        defSelectSeasonOption.value = 'Выберите сезон';
+        defSelectSeasonOption.textContent = 'Выберите сезон';
+        const seasonSelect = document.getElementById('season');
+        seasonSelect.appendChild(defSelectSeasonOption)
+
+        const defSelectChampOption = document.createElement('option');
+        defSelectChampOption.value = 'Выберите чемпионат';
+        defSelectChampOption.textContent = 'Выберите чемпионат';
+        const champSelect = document.getElementById('champ');
+        champSelect.appendChild(defSelectChampOption)
+
+        const defSelectTeamOption = document.createElement('option');
+        defSelectTeamOption.value = 'Выберите клуб';
+        defSelectTeamOption.textContent = 'Выберите клуб';
+        const teamSelect = document.getElementById('team');
+        teamSelect.appendChild(defSelectTeamOption)
+
+        function jsonDisplay(val)  {
+            const element = document.getElementById('jsonWindow');
+            element.style.display = val;
+        };
+
         document.getElementById('search-form').addEventListener('submit', function(event) {
             event.preventDefault();
             // Здесь будет логика отправки формы и отображения результатов
@@ -360,7 +380,7 @@
         }
 
         async function fetchAllTeams() {
-            const response = await fetch('/api/teams'); // Отправляем запрос на получение всех клубов
+            const response = await fetch('/api/teams'); 
             return await response.json();
         }
         
@@ -376,161 +396,153 @@
 
 
         async function updateSeasons() {
-            const seasons = await fetchSeasons();
-            const seasonSelect = document.getElementById('season');
-            seasonSelect.innerHTML = ''; // Очистка предыдущих опций
-            seasons.forEach(season => {
-                sessionStorage.setItem(season['name'] , parseInt(season['id']) );
-                const option = document.createElement('option');
-                option.value = season['name'] ;
-                option.textContent = season['name'] ;
-                seasonSelect.appendChild(option);
-            });
-            // Загрузить чемпионаты после загрузки сезонов
+            if (seasonSelect.options.length == 1) {
+                const seasons = await fetchSeasons();
+                seasons.forEach(season => {
+                    sessionStorage.setItem(season['name'] , parseInt(season['id']) );
+                    const option = document.createElement('option');
+                    option.value = season['name'] ;
+                    option.textContent = season['name'] ;
+                    seasonSelect.appendChild(option);
+                });
+            } else {
+                jsonDisplay('none');
+            }
+
+            champSelect.innerHTML = '';
+            champSelect.appendChild(defSelectChampOption)
+            teamSelect.innerHTML = '';
+            teamSelect.appendChild(defSelectTeamOption)
             await updateChampionships();
         }
 
+
         async function updateChampionships() {
-            const season = document.getElementById('season').value;
-            const seasonId = sessionStorage.getItem(season);
-           //const championships = await fetchChampionships(seasonId);
-            const championships = await fetchChampionships(seasonId);
-            const championshipSelect = document.getElementById('champ');
-            championshipSelect.innerHTML = ''; // Очистка предыдущих опций
-            championships.forEach(championship => {
-                sessionStorage.setItem(championship['name'], parseInt(championship['id']) );
-                const option = document.createElement('option');
-                option.value = championship['name'];
-                option.textContent = championship['name'];
-                championshipSelect.appendChild(option);
-            });
-            // Загрузить клубы, когда будут выбраны чемпионаты
-            await updateTeams();
+            if (seasonSelect.value != defSelectSeasonOption.value) {
+                const seasonId = sessionStorage.getItem(seasonSelect.value);
+                const championships = await fetchChampionships(seasonId);
+                championships.forEach(championship => {
+                    sessionStorage.setItem(championship['name'], parseInt(championship['id']) );
+                    const option = document.createElement('option');
+                    option.value = championship['name'];
+                    option.textContent = championship['name'];
+                    champSelect.appendChild(option);
+                });
+                // Загрузить клубы, когда будут выбраны чемпионаты
+                await updateTeams();
+            } 
         }
+
 
         async function updateTeams() {
-            const championshipSelect = document.getElementById('champ');
-            const championship = championshipSelect.value;
-            const season = document.getElementById('season').value;
-            const championshipId = sessionStorage.getItem(championship);
-            const teams = await fetchTeams(championshipId);
-            const teamSelect = document.getElementById('team');
-            const teamSearch = document.getElementById('team-search');
-            teamSelect.innerHTML = '';
-            teams.forEach(team => {
-                sessionStorage.setItem(team['name'], parseInt(team['id']) );
-                const option = document.createElement('option');
-                option.value = team['name'];
-                option.textContent = team['name'];
-                teamSelect.appendChild(option);
-            });
-            // Выбор последнего клуба и обновление статистики
-            if (teams.length > 0) {
-                teamSelect.value = teams[0]['name']; // Выбор последнего клуба
-                await updateStatistics(); // Автоматически обновляем статистику клуба
+            if (champSelect.value != defSelectChampOption.value) {
+                const championshipId = sessionStorage.getItem(champSelect.value);
+                const teams = await fetchTeams(championshipId);
+                const teamSearch = document.getElementById('team-search');
+                teamSelect.innerHTML = '';
+                teamSelect.appendChild(defSelectTeamOption)
+                teams.forEach(team => {
+                    sessionStorage.setItem(team['name'], parseInt(team['id']) );
+                    const option = document.createElement('option');
+                    option.value = team['name'];
+                    option.textContent = team['name'];
+                    teamSelect.appendChild(option);
+                });
+                await updateStatistics();
+                teamSearch.value = '';
+            } else {
+                teamSelect.innerHTML = '';
+                teamSelect.appendChild(defSelectTeamOption)
             }
-            teamSearch.value = '';
         }
 
-        async function updateStatistics() {
-            const team = document.getElementById('team').value;
-            if (team) {
 
-                const teamId = sessionStorage.getItem(team);
+        async function updateStatistics() {
+            if (teamSelect.value != defSelectTeamOption.value) {
+                const teamId = sessionStorage.getItem(teamSelect.value);
                 const statistics = await fetchStatisticsTeamId(teamId);
                 document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
                 // Обновляем подсветку синтаксиса
                 hljs.highlightElement(document.getElementById('statistics'));
-                document.getElementById('jsonWindow').style.display = 'block';
+                jsonDisplay('block');
+                // sessionStorage.clear() 
             }
-            // sessionStorage.clear() 
-
         }
         
+
         async function updateSelect(query) {
             searchInput.value = query;
             resultsList.innerHTML = '';
             resultsList.style.display = 'none';
             noResultsDiv.style.display = 'none';
             const statTeam = await fetchAllStatTeam(query);
-            
-            const seasonSelect = document.getElementById('season');
-            seasonSelect.innerHTML = ''; // Очистка предыдущих опций
+            seasonSelect.innerHTML = ''; 
+            seasonSelect.appendChild(defSelectSeasonOption)
             sessionStorage.clear() 
-            sessionStorage.setItem('seasons',JSON.stringify(statTeam));
+            sessionStorage.setItem('seasons', JSON.stringify(statTeam));
             const sortedKeys = Object.keys(statTeam).sort();
-            
             sortedKeys.reverse().forEach(key => {
                 const option = document.createElement('option');
                 option.value = key;
                 option.textContent = key;
                 seasonSelect.appendChild(option);
             });
-            const champ =  document.getElementById('champ')
-            champ.innerHTML = ''
-            // let optionDef = document.createElement('option');
-            // optionDef.value = 'Выберите чемпионат';
-            // optionDef.textContent = 'Выберите чемпионат';
-            // champ.appendChild(optionDef) ;
-            const season = document.getElementById('season').value;
+            champSelect.innerHTML = ''
+            champSelect.appendChild(defSelectChampOption)
             let oneChamp = ''
-            let isOne = true 
-            Object.keys(statTeam[season]).forEach(champName => {
-                if (isOne) {
-                    oneChamp = champName
-                    isOne = false
-                }
+            Object.keys(statTeam).forEach(champName => {
                 const option = document.createElement('option');
-                option.value = champName;
-                option.textContent = champName;
-                champ.appendChild(option);
+                option.value = statTeam[champName];
+                option.textContent = statTeam[champName];
+                champSelect.appendChild(option);
             });
-            let team = document.getElementById('team')
-            team.innerHTML = ''
-            let optionQuery = document.createElement('option');
-            optionQuery.value = query;
-            optionQuery.textContent = query;
-            team.appendChild(optionQuery) ;
-            getStatistics(statTeam[season][oneChamp])
+            teamSelect.innerHTML = ''
+            let option = document.createElement('option');
+            option.value = query;
+            option.textContent = query;
+            teamSelect.appendChild(option) ;
 
-            document.getElementById('season').removeEventListener('change', updateChampionships);
+            document.getElementById('season').removeEventListener('change', updateSeasons);
             document.getElementById('champ').removeEventListener('change', updateTeams);
             document.getElementById('team').removeEventListener('change', updateStatistics);
+            jsonDisplay('none');
 
             document.getElementById('season').addEventListener('change', changeSeason);
             document.getElementById('champ').addEventListener('change', changeChamp);
         }
 
+
         async function changeSeason() {
-            const season = document.getElementById('season').value;
-            const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
-            const champSelect = document.getElementById('champ');
             champSelect.innerHTML = ''
-            let oneChamp = ''
-            let isOne = true 
-            Object.keys(seasonStat[season]).forEach(champName => {
-                if (isOne) {
-                    oneChamp = champName
-                    isOne = false
-                }
-                const option = document.createElement('option');
-                option.value = champName;
-                option.textContent = champName;
-                champSelect.appendChild(option);
-            });
-            getStatistics(seasonStat[season][oneChamp])
+            champSelect.appendChild(defSelectChampOption)
+            if (seasonSelect.value != defSelectSeasonOption.value) {
+                const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
+                Object.keys(seasonStat[seasonSelect.value]).forEach(champName => {
+                    const option = document.createElement('option');
+                    option.value = champName;
+                    option.textContent = champName;
+                    champSelect.appendChild(option);
+                });
+            } 
         }
 
-        async function getStatistics(query) {
-            const statistics = await fetchStatisticsTeamId(query);
-            document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);
+
+        async function getStatistics(teamId) {
+            const statistics = await fetchStatisticsTeamId(teamId);
+            document.getElementById('statistics').textContent = JSON.stringify(statistics, null, 2);+
+            hljs.highlightElement(document.getElementById('statistics'));
+            jsonDisplay('block');
         }
 
-        async function changeChamp(query) {
-            const season = document.getElementById('season').value;
-            const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
-            const champ = document.getElementById('champ').value;
-            getStatistics(seasonStat[season][champ])
+
+        async function changeChamp() {
+            if (champSelect.value != defSelectChampOption.value) {
+                const season = document.getElementById('season').value;
+                const seasonStat = JSON.parse(sessionStorage.getItem('seasons'));
+                const champ = document.getElementById('champ').value;
+                await getStatistics(seasonStat[seasonSelect.value][champSelect.value])
+            }
+            
             
         }
 
@@ -557,19 +569,11 @@
                 });
                 resultsList.style.display = 'block';
             } else {
-                noResultsDiv.style.display = 'block'; // Показать сообщение об отсутствии результатов
+                noResultsDiv.style.display = 'block'; 
             }
             loader.style.display = 'none';
-        
-            
-
-            // Если при вводе только одно совпадение, обновляем выбор клуба
-            if (filteredTeams.length === 1) {
-                document.getElementById('team-search').value = filteredTeams[0];
-                document.getElementById('team').value = filteredTeams[0];
-                await updateStatistics();
-            }
         }
+
 
         function selectTeam() {
             const selectedTeam = document.getElementById('team-search').value;
@@ -579,13 +583,15 @@
             document.getElementById('team-search').value = '';
             document.getElementById('results').innerHTML = ''; // Очищаем список предложений
         }
+
+
         async function main(){
             document.getElementById('player').addEventListener('click', () => {
                 document.getElementById('player').disabled = true;
                 console.log("Тесты начались: поле ввода отключено.");
             });
             await updateSeasons(); // Загружаем сезоны
-            document.getElementById('season').addEventListener('change', updateChampionships);
+            document.getElementById('season').addEventListener('change', updateSeasons);
             document.getElementById('champ').addEventListener('change', updateTeams);
             document.getElementById('team').addEventListener('change', updateStatistics);
 
@@ -628,14 +634,12 @@
             noResultsDiv.style.display = 'none';
             loader.style.display = 'none';
             selectedIndex = -1;
-
             debounceTimer = setTimeout(() => {
                 if (query === '') {
                     renderHistory();
                     main() // Если пусто, показываем историю или ничего
                     return;
                 }
-
                 searchTeams(query);
             }, 300);
         });
@@ -663,6 +667,9 @@
                 }
             } else if (event.key === 'Backspace') {
                 if (!allDel && searchInput.value == '') {
+                    seasonSelect.innerHTML = '';
+                    seasonSelect.appendChild(defSelectSeasonOption)
+                    jsonDisplay('none');
                     main()
                     allDel = true
                 }

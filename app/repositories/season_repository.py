@@ -11,8 +11,18 @@ class SeasonRepository:
 
 
     async def get_all(self):
-        seasons = await self.db.fetch("""SELECT name, id FROM stats.seasons x
-                                        ORDER BY x.name DESC""")
+        seasons = await self.db.fetch("""select
+                                            *
+                                        from
+                                            stats.seasons
+                                        where
+                                            id in (
+                                            select
+                                                ci.season_id
+                                            from
+                                                stats.champs_info ci)
+                                        order by
+                                            name desc""")
         return [dict(season) for season in seasons]
 
 
