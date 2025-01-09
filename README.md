@@ -52,7 +52,8 @@ GET /seasons/{season_id}
   ```
   curl -X 'GET' \
     'https://www.goalstatsapi.ru/api/seasons/25' \
-    -H 'accept: application/json'
+    -H 'accept: application/json' \
+    -k
   ```
 	
 Response body
@@ -67,7 +68,12 @@ GET /championships/?season_id={season_id}
 Описание: Возвращает список всех чемпионатов.
 
 ### Пример запроса
-curl -X GET "https://www.goalstatsapi.ru/api/championships/?season_id=25"
+  ```
+  curl -X 'GET' \
+    'https://www.goalstatsapi.ru/api/championships/?season_id=25' \
+    -H 'accept: application/json' \
+    -k
+  ```
 
 ## Документация API
 
