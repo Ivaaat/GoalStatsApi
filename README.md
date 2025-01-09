@@ -37,7 +37,10 @@ docker-compose up --build
 ## Использование
 
 ### Эндпоинты
-Корневой эндоинт 'https://www.goalstatsapi.ru/api/'
+Корневой эндоинт 
+```
+https://www.goalstatsapi.ru/api/ 
+```
 
 #### Получить все сезоны
 GET /seasons/
