@@ -1,9 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from models import Championship
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from dependencies import get_championship_repository
 from repositories import ChampionshipRepository
+import asyncpg
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ async def create_championship(championship: Championship, rep: ChampionshipRepos
 
 
 @router.get("/championships/")
-async def read_championships(season_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
+async def get_championships_by_season_id(season_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
     championships = await rep.get_all(season_id)
     if championships:
         return JSONResponse(content = championships)
@@ -26,27 +27,43 @@ async def read_championships(season_id: int, rep: ChampionshipRepository = Depen
     
 
 @router.get("/championships/{championship_id}", response_model=Championship)
-async def read_championship(championship_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
+async def get_championship_by_champ_id(championship_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
     championship = await rep.get(championship_id)
     if championship:
         return JSONResponse(content = dict(championship))
     else:
         raise HTTPException(status_code=404, detail=f"championship_id = {championship_id}  not found")
 
+    
 
-@router.put("/championships/{championship_id}")
+@router.put("/championships/")
 async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
-    # Логика обновления чемпионата
-    pass
+    try:
+        id = await rep.update(championship)
+    except asyncpg.exceptions.UniqueViolationError:
+        raise HTTPException(status_code=409, detail={'errors': "Championship already exists.", 'old_id': championship.old_id})
+    if id:
+        return JSONResponse(content={"message": "Championship update", 'сhampionship': dict(championship)}, status_code=200)
+    else:
+        raise HTTPException(status_code=404, detail={'errors': "Championship not found.", 'сhamp_id': championship.id})
 
 
-@router.patch("/championships/{championship_id}")
-async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
-    # Логика обновления чемпионата
-    pass
+@router.patch("/championships/")
+async def update_field_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
+    champ = Championship(**await rep.get(championship.id))
+    if not champ:
+        raise HTTPException(status_code=404, detail={'errors': "Championship not found.", 'сhamp_id': championship.id})
+    update_data = championship.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(champ, key, value)
+    await rep.update(champ)
+    return JSONResponse(content={"message": "Championship update", 'сhampionship': dict(champ)}, status_code=200)
 
 
 @router.delete("/championships/{championship_id}")
 async def delete_championship(championship_id: int, rep: ChampionshipRepository=Depends(get_championship_repository)):
-    # Логика удаления чемпионата
-    pass
+    id = await rep.delete(championship_id)
+    if id:
+        return Response(status_code=204)
+    else:
+        raise HTTPException(status_code=404, detail={'errors': "Championship not found.", 'сhamp_id': championship_id})

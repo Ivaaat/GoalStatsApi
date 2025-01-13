@@ -3,7 +3,7 @@ from typing import Optional
 
 class Championship(BaseModel):
     id: Optional[int] = None 
-    name: str
+    name: Optional[str] = None
     country: Optional[str] = None
     priority: Optional[int] = None
     img: Optional[str] = None
@@ -15,3 +15,5 @@ class Championship(BaseModel):
     end_date: Optional[str] = None
     is_cup: Optional[bool] = None
     alias: Optional[str] = None
+    champ_id: Optional[int] = None
+    season_id: Optional[int] = None
