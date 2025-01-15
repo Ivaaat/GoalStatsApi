@@ -12,35 +12,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build and run Docker on server
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          # Остановите и удалите существующий контейнер
+          if [ "$(docker ps -q -f name=goalstatapi)" ]; then
+            docker stop goalstatapi
+            docker rm goalstatapi
+          fi
 
-      - name: Build Docker Image
-        run: |
+          # Соберите новый образ
+          cd /path/to/your/app  # Путь к вашему приложению на сервере
           docker build -t varkkosh/goalstatapi:latest .
 
-      - name: Push Docker Image
-        run: |
-          docker push varkkosh/goalstatapi:latest
-
-      - name: Pull Docker Image
-        run: |
-          docker pull varkkosh/goalstatapi:latest
-
-      - name: Deploy to server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi
-            git pull origin main
-            docker run -d -p 8000:8000 varkkosh/goalstatapi:1.0
-          EOF
+          # Запустите новый контейнер
+          docker run -d --name goalstatapi varkkosh/goalstatapi:latest
+        EOF
 
