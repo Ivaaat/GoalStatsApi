@@ -1,5 +1,5 @@
-const DOMAIN = 'http://127.0.0.1:8000'
-// const DOMAIN = 'https://www.goalstatsapi.ru'
+//const DOMAIN = 'http://127.0.0.1:8000'
+const DOMAIN = 'https://www.goalstatsapi.ru'
 const defSelectSeasonOption = document.createElement('option');
 defSelectSeasonOption.value = 'Выберите сезон';
 defSelectSeasonOption.textContent = 'Выберите сезон';
