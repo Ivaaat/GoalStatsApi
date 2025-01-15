@@ -30,7 +30,7 @@ jobs:
           fi
 
           # Соберите новый образ
-          cd /path/to/your/app  # Путь к вашему приложению на сервере
+          cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi  # Путь к вашему приложению на сервере
           docker build -t varkkosh/goalstatapi:latest .
 
           # Запустите новый контейнер
