@@ -28,4 +28,4 @@ jobs:
              docker rm goalstatapi
              cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi
              docker build -t varkkosh/goalstatapi .
-             docker run -d -p 8000:8000 varkkosh/goalstatapi:latest
+             docker run -d --name goalstatapi -p 8000:8000 varkkosh/goalstatapi:latest
