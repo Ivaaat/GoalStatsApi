@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - dev   # Запускать при изменении в ветке main
+      - main   # Запускать при изменении в ветке main
   #pull_request:
     #branches:
      # - main   # Запускать при pull запросах в ветку main
