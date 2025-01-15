@@ -22,18 +22,5 @@ jobs:
 
     - name: Build and run Docker on server
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          # Остановите и удалите существующий контейнер
-          if [ "$(docker ps -q -f name=goalstatapi)" ]; then
-            docker stop goalstatapi
-            docker rm goalstatapi
-          fi
-
-          # Соберите новый образ
-          cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi  # Путь к вашему приложению на сервере
-          docker build -t varkkosh/goalstatapi:latest .
-
-          # Запустите новый контейнер
-          docker run -d --name goalstatapi varkkosh/goalstatapi:latest
-        EOF
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 
 
