@@ -44,14 +44,6 @@ class MatchesRepository:
         return id
 
 
-    async def get_all(self, season_id):
-        champs = await self.db.fetch("""SELECT c.id, c.name FROM stats.seasons_champs s
-                                join stats.champs_info c on c.id = s.league_id 
-                                where s.season_id = $1
-                                ORDER BY c.name asc""", season_id)
-        return [dict(champ)for champ in champs]
-
-
     async def get(self, match_id: int):
         data = await self.db.fetch("""SELECT * FROM stats.matches
                                 where id = $1 """, match_id)
@@ -105,6 +97,5 @@ class MatchesRepository:
         return id
 
 
-    async def delete(self, championship_id: int):
-        # Логика удаления чемпионата
-        pass
+    async def delete(self, match_id: int):
+        return await self.db.fetchval('DELETE FROM stats.matches WHERE id = $1 RETURNING id', match_id)

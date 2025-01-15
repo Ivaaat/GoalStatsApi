@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from dependencies import get_stat_repository, get_team_repository
 from repositories import StatisticsRepository, TeamRepository
 from models import Season

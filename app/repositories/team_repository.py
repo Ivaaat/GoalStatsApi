@@ -14,22 +14,24 @@ class TeamRepository:
             team.id = id_team
             return None
         id_team_all = await self.db.fetchval("""INSERT INTO stats.teams (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id""", team.name)
-        id = await self.db.fetchval("""INSERT INTO stats.teams_info ("name", icon, old_id, team_id) 
+        team.id = await self.db.fetchval("""INSERT INTO stats.teams_info ("name", icon, old_id, team_id) 
                                     VALUES ($1,$2,$3,$4) RETURNING id""", 
                                     team.name,
                                     team.icon,
                                     team.old_id,
                                     id_team_all)
-        team.id = id
-        return id
+        return team.id
+    
+    async def get(self, team_id: int):
+        return await self.db.fetchrow("""select * from stats.teams_info 
+                                    where id = $1 """, team_id)
 
 
     async def get_all(self, championship_id):
-        Teams = await self.db.fetch("""select name, id from stats.teams_info 
+        teams = await self.db.fetch("""select name, id from stats.teams_info 
                                     where champ_id = $1
                                     order by name asc""", championship_id)
-        return [dict(Team)for Team in Teams]
-
+        return [dict(team)for team in teams]
 
 
     async def search(self, query: str):
@@ -51,8 +53,7 @@ class TeamRepository:
         return [team.get('name') for team in teams] 
 
 
-
-    async def get(self, team_id: int):
+    async def get_stat(self, team_id: int):
         async with self.pool.acquire() as connection:
             stat = await connection.fetchrow('''SELECT * FROM stats.get_stat($1);''', team_id)
         return dict(stat)
@@ -70,11 +71,20 @@ class TeamRepository:
         return dict(players)
 
 
+    async def update(self, team: Team):
+        return await self.db.fetchval("""UPDATE stats.teams_info 
+                                        SET 
+                                            name = $1,
+                                            icon = $2,
+                                            old_id = $3
+                                        WHERE id = $4
+                                        RETURNING id;""", 
+                                    team.name,
+                                    team.icon,
+                                    team.old_id,
+                                    team.id
+                                    )
 
-    async def update(self, team_id: int, data: dict):
-        # Логика обновления клуба
-        pass
 
     async def delete(self, team_id: int):
-        # Логика удаления клуба
-        pass
+        return await self.db.fetchval('DELETE FROM stats.teams_info WHERE id = $1 RETURNING id', team_id)

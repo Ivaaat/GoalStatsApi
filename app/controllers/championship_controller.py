@@ -27,14 +27,13 @@ async def get_championships_by_season_id(season_id: int, rep: ChampionshipReposi
     
 
 @router.get("/championships/{championship_id}", response_model=Championship)
-async def get_championship_by_champ_id(championship_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
+async def get_championship(championship_id: int, rep: ChampionshipRepository = Depends(get_championship_repository)):
     championship = await rep.get(championship_id)
     if championship:
         return JSONResponse(content = dict(championship))
     else:
         raise HTTPException(status_code=404, detail=f"championship_id = {championship_id}  not found")
 
-    
 
 @router.put("/championships/")
 async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):

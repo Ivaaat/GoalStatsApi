@@ -1,7 +1,6 @@
-from fastapi import APIRouter
 from models import Match
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import JSONResponse
 from dependencies import get_match_repository
 from repositories import MatchesRepository
 
@@ -16,6 +15,15 @@ async def create_match(match: Match, rep: MatchesRepository = Depends(get_match_
         raise HTTPException(status_code=409, detail={'errors': "Match already exists.", 'match_old': match.old_id})
 
 
+@router.get("/matches/{match_id}", response_model=Match)
+async def get_match(match_id: int, rep: MatchesRepository = Depends(get_match_repository)):
+    match = await rep.get(match_id)
+    if match:
+        return match
+    else:
+        raise HTTPException(status_code=404, detail=f"Match  not found,  match_id = {match_id}")
+
+
 @router.put("/matches/")
 async def update_match(match: Match, rep: MatchesRepository = Depends(get_match_repository)):
     id = await rep.update(match)
@@ -24,6 +32,7 @@ async def update_match(match: Match, rep: MatchesRepository = Depends(get_match_
     else:
         raise HTTPException(status_code=404, detail={'errors': "Match not found.", 'match_old': match.old_id})
 
+
 @router.post("/matches/{date}")
 async def create_date(date: str, rep: MatchesRepository = Depends(get_match_repository)):
     id = await rep.create_date(date)
@@ -31,34 +40,12 @@ async def create_date(date: str, rep: MatchesRepository = Depends(get_match_repo
         return JSONResponse(content = {date:id})
     else:
         raise HTTPException(status_code=409, detail={'errors': "Match already exists.", 'match_id': id})
-
-@router.get("/matches/")
-async def read_match(season_id: int, champ: MatchesRepository = Depends(get_match_repository)):
-    championships = await champ.get_all(season_id)
-    if championships:
-        return JSONResponse(content = championships)
-    else:
-        raise HTTPException(status_code=404, detail="Match not found")
     
 
-@router.get("/matches/{match_id}")
-async def read_match(match_id: int, rep: MatchesRepository = Depends(get_match_repository)):
-    championship = await rep.get(match_id)
-    if championship:
-        return JSONResponse(content = championship)
-    else:
-        raise HTTPException(status_code=404, detail=f"match_id = {match_id}  not found")
-
-@router.put("/matches/{match_id}")
-async def update_match(match: Match, rep: MatchesRepository = Depends(get_match_repository)):
-    id = await rep.update(match)
+@router.delete("/matches/{match_id}")
+async def delete_match(match_id: int, rep: MatchesRepository = Depends(get_match_repository)):
+    id = await rep.delete(match_id)
     if id:
-        return match
+        return Response(status_code=204)
     else:
-        raise HTTPException(status_code=409, detail="Match already exists.")
-
-
-@router.delete("/matches/{championship_id}")
-async def delete_match(championship_id: int):
-    # Логика удаления чемпионата
-    pass
+        raise HTTPException(status_code=404, detail={'errors': "Match not found.", 'match_id': match_id})
