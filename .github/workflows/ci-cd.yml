@@ -16,11 +16,10 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
+      uses: appleboy/ssh-action@v1.2.0
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Build and run Docker on server
-      run: |
-        ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} 
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: whoami
 
