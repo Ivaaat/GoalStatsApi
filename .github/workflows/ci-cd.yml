@@ -24,8 +24,4 @@ jobs:
           #key: ${{ secrets.SSH_PRIVATE_KEY }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-             docker stop goalstatapi
-             docker rm goalstatapi
-             cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi
-             docker build -t varkkosh/goalstatapi .
-             docker run -d --name goalstatapi -p 8000:8000 varkkosh/goalstatapi:latest
+             docker-compose up --build

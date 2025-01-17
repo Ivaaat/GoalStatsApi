@@ -1,6 +1,6 @@
 from celery import Celery
 import time
-import redis
+#import redis
 import os
 from update import UpdateFactory
 import asyncio
@@ -19,8 +19,8 @@ os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
 
 celery_app = Celery(
 'tasks',
-broker='redis://localhost:6379/0', 
-backend='redis://localhost:6379/0' 
+broker='redis://redis:6379/0', 
+backend='redis://redis:6379/0' 
 )
 
 celery_app.autodiscover_tasks()

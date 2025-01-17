@@ -24,6 +24,9 @@ from config import get_ssl_context
 from repositories import SeasonRepository, ChampionshipRepository, TeamRepository, MatchesRepository
 from models import Championship, Team, Match
 
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 load_dotenv()
 DB_USER= os.getenv('DB_USER')
@@ -69,13 +72,14 @@ class UpdateStrategy(ABC):
         pass
 
     async def get(date:str, semaphore:Semaphore):
+        
         async with semaphore:
             async with aiohttp.ClientSession() as session:
-                async with session.get('{}{}'.format(INITIAL_LINK, date)) as response:
+                async with session.get('{}{}'.format(INITIAL_LINK, date), ssl=ssl_context) as response:
                     if response.status:
                         result = await response.json()
                         if result.get('matches'):
-                            if result.get('matches').get('football'):
+                            if result.get('matches').get('football'): 
                                 DateUpdateStrategy.data[date] = result['matches']['football']
 
 
@@ -96,8 +100,8 @@ class DateUpdateStrategy(UpdateStrategy):
                 await DateUpdateToDay.update(date, semaphore)
             else:
                 await  DateUpdateAll.update()
-        except ValueError:
-            return 'Неверный формат даты'
+        except ValueError as e:
+            return print('Неверный формат даты {}'.format(e))
 
 
 class DateUpdateAll(DateUpdateStrategy):
@@ -190,12 +194,12 @@ class ChampPrepare(StatPrepare):
     
 
     async def prepare(self, data: str):
-        translator = Translator()
+        #translator = Translator()
         name = data.get('name_tournament') if data.get('name_tournament') else data.get('name')
-        translator.translate(name.lower().replace(' ', '_'), dest='en')
+        #translator.translate(name.lower().replace(' ', '_'), dest='en')
         season = ['', '']
         async with aiohttp.ClientSession() as session:
-            async with session.get('{}{}'.format(MAIN_LINK, data['link'])) as response:
+            async with session.get('{}{}'.format(MAIN_LINK, data['link']), ssl=ssl_context) as response:
         #response = sess.get('{}{}'.format(MAIN_LINK, data['link']))
                 if response.status == 200:
                     text = await response.text()
@@ -214,7 +218,9 @@ class ChampPrepare(StatPrepare):
             'start_date': season[0],
             'end_date': season[1],
             'is_cup': None,
-            'alias': translator.translate(name).text.lower().replace(' ', '_')}
+            #'alias': translator.translate(name).text.lower().replace(' ', '_')}
+            'alias': None
+        }
 
 
 class MatchPrepare(StatPrepare):
@@ -317,7 +323,7 @@ class MatchUpdatePost(StatUpdatePost):
                 if response.status == 404:
                     sess.post(f'{DOMAIN}/api/matches/', json = data)
                 elif response.status == 422:
-                    print()
+                    pass
 
 
 class StatUpdateDatabase(ABC):
@@ -459,7 +465,6 @@ class UpdaterDatabase(Updater):
         await StatUpdateDatabase.pool.close()
         
 
-
 class UpdaterPost(Updater):
     def __init__(self, data: Dict):
         self.data = data
@@ -505,7 +510,7 @@ class UpdateFactory:
 
 if __name__ == '__main__':
     start = time.time()
-    updater = UpdateFactory('db', '2025-01-01')
+    updater = UpdateFactory('db', '2025-01-20')
     asyncio.run(updater.run())
     print(time.time() - start)
 
