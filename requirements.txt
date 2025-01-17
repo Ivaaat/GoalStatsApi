@@ -3,3 +3,8 @@ uvicorn
 asyncpg
 Jinja2
 python-dotenv
+celery
+redis
+googletrans
+aiohttp
+requests

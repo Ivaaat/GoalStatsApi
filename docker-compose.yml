@@ -1,38 +1,29 @@
-version: '3.8'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
+    volumes:
+      - ./app:/app
+      - ./certs:/etc/ssl/certs
     ports:
       - "8000:8000"
+    container_name: goalStatApi
     depends_on:
-      - db
-    container_name: fastapi
-    expose:  # Используем expose вместо ports, чтобы контейнер не был доступен извне
-      - "8000"
-    #networks:
-      #- app-network
+      - redis
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-  db:
-    image: postgres:latest
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  redis:
+    image: "redis:alpine"  
     ports:
-      - "5432:5432"
-    networks:
-      - app-network
+      - "6379:6379"
 
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
+
+  worker:
+    build: .
     volumes:
-      - ./default.conf:/etc/nginx/conf.d/default.conf
-    ports:
-      - "80:80"  # Пробрасываем порт 80 на хост
-
-networks:
-  app-network:
+      - ./app:/app
+      - ./certs:/etc/ssl/certs
+    depends_on:
+      - redis
+    command: ["celery", "-A", "tasks", "worker", "--loglevel=info"]
+    
