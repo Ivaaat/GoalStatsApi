@@ -76,6 +76,7 @@ async def read_statistics_club(team_name: str, stat: StatisticsRepository = Depe
 @router.get("/statistics/{season_id}")
 async def read_statistics_club(club_id: int, club: TeamRepository = Depends(get_team_repository)):
     club_stat = await club._get(club_id)
+    asd : str  = ""
     if club_stat:
         return JSONResponse(content = club_stat)
     raise HTTPException(status_code=404, detail="Club not found")

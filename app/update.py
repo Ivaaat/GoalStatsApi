@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 import os
 from config import get_ssl_context
 from repositories import SeasonRepository, ChampionshipRepository, TeamRepository, MatchesRepository
-from models import Season, Championship, Team, Match
+from models import Championship, Team, Match
 
 
 load_dotenv()
@@ -44,7 +44,6 @@ RETRY_DELAY = 30
 SLEEP = 1
 
 def generate_date_range(start_date = '', end_date_str = '2040-01-04'):
-    # Преобразование строковой даты в объект datetime
     if not start_date:
         start_date = datetime.now()
     else:
@@ -52,12 +51,14 @@ def generate_date_range(start_date = '', end_date_str = '2040-01-04'):
     end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
     # Инициализация списка для хранения дат
     date_range = []
-    # Генерация дат от текущей до конечной
     current_date = start_date
-    while current_date <= end_date:
+    while current_date.date() <= end_date.date():
         date_range.append(current_date.strftime('%Y-%m-%d'))  # Добавление даты в нужном формате
         current_date += timedelta(days=1)  # Переход к следующему дню
-
+    else:
+        while current_date.date() >= end_date.date():
+            date_range.append(current_date.strftime('%Y-%m-%d')) 
+            current_date -= timedelta(days=1) 
     return date_range
 
 
@@ -96,7 +97,7 @@ class DateUpdateStrategy(UpdateStrategy):
             else:
                 await  DateUpdateAll.update()
         except ValueError:
-            return print('Неверный формат даты')
+            return 'Неверный формат даты'
 
 
 class DateUpdateAll(DateUpdateStrategy):
@@ -140,34 +141,6 @@ class DateUpdateToDay(DateUpdateStrategy):
     async def update(date: str, semaphore:Semaphore):
         dates = generate_date_range(end_date_str=date)
         await asyncio.gather(*[UpdateStrategy.get(date_up, semaphore) for date_up in dates])
-        
-
-        # today = datetime.today()
-        # today_str = today.date()
-        # date_update =  datetime.strptime(date, '%Y-%m-%d')
-        # direction = 'next'
-        # if today > date_update:
-        #     direction = 'prev'
-        # #data_today = sess.get('{}{}'.format(INITIAL_LINK, today_str)).json()
-        #data_today = await UpdateStrategy.get(today_str)
-        # date_fetch = data_today['nav'][direction]['date']
-        # if data_today['matches']['football']:
-        #     DateUpdateStrategy.data[str(today_str)] = data_today['matches']['football']
-        # date_to =  datetime.strptime(date_fetch, '%Y-%m-%d')
-        # conditions = date_to >= date_update if direction == 'prev' else date_to <= date_update
-        # while conditions:
-        #     #time.sleep(random.uniform(0.5, 2))
-        #     try:
-        #         #data = sess.get('{}{}'.format(INITIAL_LINK, date_fetch)).json()
-        #         data = await UpdateStrategy.get(date_fetch)
-        #         date_prev = date_fetch
-        #     except Exception as e:
-        #         return
-        #     date_fetch = data['nav'][direction]['date']
-        #     date_to =  datetime.strptime(date_fetch, '%Y-%m-%d')
-        #     if data['matches']['football']:
-        #         DateUpdateStrategy.data[date_prev] = data['matches']['football']
-        #     conditions = date_to >= date_update if direction == 'prev' else date_to <= date_update
 
 
 class DateUpdateRange(DateUpdateStrategy):
@@ -483,7 +456,7 @@ class UpdaterDatabase(Updater):
                 await self.matches.prepare(tournaments['matches'], tournaments['id'], date)
                 await asyncio.gather(*[MatchUpdateDatabase.update(match) for match in self.matches.data.values()])
             print("Update {}".format(date))
-        await StatUpdateDatabase.close()
+        await StatUpdateDatabase.pool.close()
         
 
 
@@ -510,27 +483,31 @@ class UpdaterPost(Updater):
 
 class UpdateFactory:
 
-    def __init__(self, strategy) -> None:
+    def __init__(self, strategy, date: str) -> None:
         self.strategy = strategy
         self.updater: Union[UpdaterPost, UpdaterDatabase]
+        self.date = date
         
 
     async def run(self):
         semaphore = asyncio.Semaphore(3)
-        #await DateUpdateStrategy.update(date = '2025-02-05', strategy = 'toDay', semaphore = semaphore)
-        await DateUpdateStrategy.update(date = '2025-02-17-2026-01-01', strategy = 'range', semaphore = semaphore)
+        await DateUpdateStrategy.update(date = self.date, strategy = 'toDay', semaphore = semaphore)
+        #await DateUpdateStrategy.update(date = '2025-02-17-2026-01-01', strategy = 'range', semaphore = semaphore)
         if self.strategy == 'post':
             updater = UpdaterPost(DateUpdateStrategy.data)
         elif self.strategy == 'db':
              updater = UpdaterDatabase(DateUpdateStrategy.data)
         if updater:
             await updater.update()
+            return 'Update {}'.format(list(updater.data.keys()))
 
 
-start = time.time()
-updater = UpdateFactory('db')
-asyncio.run(updater.run())
-print(time.time() - start)
+
+if __name__ == '__main__':
+    start = time.time()
+    updater = UpdateFactory('db', '2025-01-01')
+    asyncio.run(updater.run())
+    print(time.time() - start)
 
 
 
