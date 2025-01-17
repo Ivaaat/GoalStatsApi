@@ -25,4 +25,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi
-            docker-compose up --build
+            docker-compose up --build -d
