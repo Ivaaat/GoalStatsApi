@@ -20,8 +20,6 @@ async def create_season(season: Season, rep: SeasonRepository = Depends(get_seas
 
 @router.get("/seasons/", response_model=list[Season])
 async def get_seasons(season: SeasonRepository = Depends(get_season_repository)):
-    updater = UpdateFactory('db', '2025-01-20')
-    asyncio.run(updater.run())
     seasons = await season.get_all()
     if seasons:
         return JSONResponse(content = seasons)
