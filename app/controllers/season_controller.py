@@ -11,10 +11,6 @@ router = APIRouter()
 
 @router.post("/seasons/")
 async def create_season(season: Season, rep: SeasonRepository = Depends(get_season_repository)):
-    print('sadsa')
-    updater = UpdateFactory('db', '2025-01-20')
-    await updater.run()
-    return
     id = await rep.create(season.name)
     if id:
         return JSONResponse(content={"message": "Season created", 'seson_id': id}, status_code=201)
