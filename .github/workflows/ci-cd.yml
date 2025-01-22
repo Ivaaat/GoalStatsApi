@@ -23,4 +23,4 @@ jobs:
           script: |
              cd /home/${{ secrets.SERVER_USER }}/git/GoalStatsApi
              git pull origin main
-             docker-compose up --build
+             docker-compose up --build -d
