@@ -33,7 +33,7 @@ async def get_users_repository(connection=Depends(get_database_connection)) -> U
 
 
 # Зависимость для проверки прав доступа
-def get_current_user(token: str = Depends(oauth2_scheme), access_token: str = Cookie(None)):
+async def get_current_user(token: str = Depends(oauth2_scheme), access_token: Union[str | None] = Cookie(None, include_in_schema=False)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -56,15 +56,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), access_token: str = Co
         raise credentials_exception
 
 
-# Проверка прав доступа для администраторов
-def get_current_active_user(request: Request ,current_user: Union[tuple, None] = Depends(get_current_user)):
+
+async def get_current_active_user(request: Request ,current_user: Union[tuple, None] = Depends(get_current_user)):
     username, role = current_user
     if role not in ['user', 'admin']:
         raise HTTPException(status_code=403, detail="You do not have access to this resource.")
     return username
 
-
-def get_current_active_admin(request: Request, current_user: Union[tuple, None] = Depends(get_current_user)):
+# Проверка прав доступа для администраторов
+async def get_current_active_admin(request: Request, current_user: Union[tuple, None] = Depends(get_current_user)):
     username, role = current_user
     if role != 'admin':
         raise HTTPException(status_code=403, detail="You do not have access to this resource.")
