@@ -23,20 +23,13 @@ import os
 from config import get_ssl_context
 from repositories import SeasonRepository, ChampionshipRepository, TeamRepository, MatchesRepository
 from models import Championship, Team, Match
+from config import config
 
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 
-load_dotenv()
-DB_USER= os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_NAME = os.getenv('DB_NAME')
-DB_HOST= os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-INITIAL_LINK= os.getenv('INITIAL_LINK')
-MAIN_LINK = os.getenv('MAIN_LINK')
-DOMAIN = os.getenv('DOMAIN')
+
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 }
@@ -75,7 +68,7 @@ class UpdateStrategy(ABC):
         
         async with semaphore:
             async with aiohttp.ClientSession() as session:
-                async with session.get('{}{}'.format(INITIAL_LINK, date), ssl=ssl_context) as response:
+                async with session.get('{}{}'.format(config.setting.initial_link, date), ssl=ssl_context) as response:
                     if response.status:
                         result = await response.json()
                         if result.get('matches'):
@@ -109,7 +102,7 @@ class DateUpdateAll(DateUpdateStrategy):
 
     @classmethod
     async def update(cls):
-        date_start = sess.get('{}{}'.format(INITIAL_LINK, cls.date)).json()
+        date_start = sess.get('{}{}'.format(config.setting.initial_link, cls.date)).json()
         date_fetch = date_start['nav']['next']['date']
         flag = date_start['nav']['next']
         while flag:
@@ -132,7 +125,7 @@ class DateUpdateDay(DateUpdateStrategy):
     @staticmethod
     async def update(date: str):
         try:
-            data = sess.get('{}{}'.format(INITIAL_LINK, date)).json()
+            data = sess.get('{}{}'.format(config.setting.initial_link, date)).json()
         except Exception as e:
             return
         if data['matches']['football']:
@@ -199,7 +192,7 @@ class ChampPrepare(StatPrepare):
         #translator.translate(name.lower().replace(' ', '_'), dest='en')
         season = ['', '']
         async with aiohttp.ClientSession() as session:
-            async with session.get('{}{}'.format(MAIN_LINK, data['link']), ssl=ssl_context) as response:
+            async with session.get('{}{}'.format(config.setting.main_link, data['link']), ssl=ssl_context) as response:
         #response = sess.get('{}{}'.format(MAIN_LINK, data['link']))
                 if response.status == 200:
                     text = await response.text()
@@ -276,7 +269,7 @@ class DateUpdatePost(StatUpdatePost):
     @classmethod
     async def update(сls, data: str):
         async with aiohttp.ClientSession() as session:
-            async with session.post(f'{DOMAIN}/api/matches/{data}', json=data) as response:
+            async with session.post(f'{config.setting.domain}/api/matches/{data}', json=data) as response:
                 response.raise_for_status()  # Проверка на ошибки HTTP
                 DateUpdatePost.dates.update(await response.json())   # Предполагается, что ответ в формате JSON
         
@@ -287,7 +280,7 @@ class SeasonUpdatePost(StatUpdatePost):
     @classmethod
     async def update(сls, data: str):
         async with aiohttp.ClientSession() as session:
-            await session.post(f'{DOMAIN}/api/seasons/', json = data)
+            await session.post(f'{config.setting.domain}/api/seasons/', json = data)
 
 
 class ChampUpdatePost(StatUpdatePost):
@@ -296,7 +289,7 @@ class ChampUpdatePost(StatUpdatePost):
     @classmethod
     async def update(сls, data: str):
         async with aiohttp.ClientSession() as session:
-            async with session.post(f'{DOMAIN}/api/championships/', json = data) as response:
+            async with session.post(f'{config.setting.domain}/api/championships/', json = data) as response:
                 resp = await response.json()
                 ChampUpdatePost.champ[resp['detail']['champ']['old_id']] = resp['detail']['champ']
 
@@ -307,7 +300,7 @@ class TeamUpdatePost(StatUpdatePost):
     @classmethod
     async def update(сls, data: Dict):
         async with aiohttp.ClientSession() as session:
-            async with session.post(f'{DOMAIN}/api/teams/', json = data) as response:
+            async with session.post(f'{config.setting.domain}/api/teams/', json = data) as response:
                 resp = await response.json()
                 if resp['detail'].get('team'):
                     TeamUpdatePost.teams[resp['detail']['team']['old_id']] = resp['detail']['team']
@@ -318,10 +311,10 @@ class MatchUpdatePost(StatUpdatePost):
     @classmethod
     async def update(сls, data: Dict):
         async with aiohttp.ClientSession() as session:
-            async with session.put(f'{DOMAIN}/api/matches/', json = data) as response:
+            async with session.put(f'{config.setting.domain}/api/matches/', json = data) as response:
                 resp = await response.json()
                 if response.status == 404:
-                    sess.post(f'{DOMAIN}/api/matches/', json = data)
+                    sess.post(f'{config.setting.domain}/api/matches/', json = data)
                 elif response.status == 422:
                     pass
 
@@ -441,11 +434,11 @@ class UpdaterDatabase(Updater):
 
     async def update(self):
         StatUpdateDatabase.pool = await asyncpg.create_pool(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME,
-            host=DB_HOST, 
-            port=DB_PORT,
+            user=config.db.user,
+            password=config.db.password,
+            database=config.db.name,
+            host=config.db.host, 
+            port=config.db.port,
             ssl=get_ssl_context()
         )
         tasks = [DateUpdateDatabase.update(date_update) for date_update in list(self.data.keys())]

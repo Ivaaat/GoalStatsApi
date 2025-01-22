@@ -2,14 +2,14 @@ from fastapi import APIRouter, Response
 from models import Championship
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from dependencies import get_championship_repository
+from dependencies import get_championship_repository, get_current_active_admin
 from repositories import ChampionshipRepository
 import asyncpg
 
 router = APIRouter()
 
 @router.post("/championships/")
-async def create_championship(championship: Championship, rep: ChampionshipRepository = Depends(get_championship_repository)):
+async def create_championship(championship: Championship, rep: ChampionshipRepository = Depends(get_championship_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.create(championship)
     if id:
         return JSONResponse(content={"message": "Champ created", "detail": {"champ": dict(championship)}}, status_code=201)
@@ -36,7 +36,7 @@ async def get_championship(championship_id: int, rep: ChampionshipRepository = D
 
 
 @router.put("/championships/")
-async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
+async def update_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository), _: str = Depends(get_current_active_admin)):
     try:
         id = await rep.update(championship)
     except asyncpg.exceptions.UniqueViolationError:
@@ -48,7 +48,7 @@ async def update_championship(championship: Championship, rep: ChampionshipRepos
 
 
 @router.patch("/championships/")
-async def update_field_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository)):
+async def update_field_championship(championship: Championship, rep: ChampionshipRepository=Depends(get_championship_repository), _: str = Depends(get_current_active_admin)):
     champ = Championship(**await rep.get(championship.id))
     if not champ:
         raise HTTPException(status_code=404, detail={'errors': "Championship not found.", 'сhamp_id': championship.id})
@@ -60,7 +60,7 @@ async def update_field_championship(championship: Championship, rep: Championshi
 
 
 @router.delete("/championships/{championship_id}")
-async def delete_championship(championship_id: int, rep: ChampionshipRepository=Depends(get_championship_repository)):
+async def delete_championship(championship_id: int, rep: ChampionshipRepository=Depends(get_championship_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.delete(championship_id)
     if id:
         return Response(status_code=204)
