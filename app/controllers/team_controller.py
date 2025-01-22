@@ -1,7 +1,7 @@
 from models import Team
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from dependencies import get_team_repository
+from dependencies import get_team_repository, get_current_active_admin
 from repositories import TeamRepository
 import asyncio
 import json
@@ -10,7 +10,7 @@ import asyncpg
 router = APIRouter()
 
 @router.post("/teams/")
-async def create_team(team: Team, rep: TeamRepository = Depends(get_team_repository)):
+async def create_team(team: Team, rep: TeamRepository = Depends(get_team_repository), _: str = Depends(get_current_active_admin)):
     """Создает новую команду."""
     id = await rep.create(team)
     if id:
@@ -63,7 +63,7 @@ async def search_teams(query: str, team: TeamRepository = Depends(get_team_repos
    
 
 @router.put("/teams/")
-async def update_team(team: Team, rep: TeamRepository = Depends(get_team_repository)):
+async def update_team(team: Team, rep: TeamRepository = Depends(get_team_repository), _: str = Depends(get_current_active_admin)):
     try:
         id = await rep.update(team)
     except asyncpg.exceptions.UniqueViolationError:
@@ -75,7 +75,7 @@ async def update_team(team: Team, rep: TeamRepository = Depends(get_team_reposit
     
 
 @router.patch("/teams/")
-async def update_field_championship(team: Team, rep: TeamRepository=Depends(get_team_repository)):
+async def update_field_championship(team: Team, rep: TeamRepository=Depends(get_team_repository), _: str = Depends(get_current_active_admin)):
     team_stat = Team(**await rep.get_stat(team.id))
     if not team_stat:
         raise HTTPException(status_code=404, detail={'errors': "Team not found.", 'team_id': team.id})
@@ -87,7 +87,7 @@ async def update_field_championship(team: Team, rep: TeamRepository=Depends(get_
 
 
 @router.delete("/teams/{team_id}")
-async def delete_team(team_id: int, rep: TeamRepository = Depends(get_team_repository)):
+async def delete_team(team_id: int, rep: TeamRepository = Depends(get_team_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.delete(team_id)
     if id:
         return Response(status_code=204)

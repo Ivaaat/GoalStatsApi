@@ -1,10 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from tasks import update_base
+from dependencies import get_current_active_admin
 
 router = APIRouter()
 
 @router.post("/update/")
-async def run_task(date: str):
+async def run_task(date: str, _: str = Depends(get_current_active_admin)):
     task = update_base.delay(date) 
     return {"task_id": task.id}
 

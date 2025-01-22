@@ -1,13 +1,13 @@
 from models import Match
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
-from dependencies import get_match_repository
+from dependencies import get_match_repository, get_current_active_admin
 from repositories import MatchesRepository
 
 router = APIRouter()
 
 @router.post("/matches/")
-async def create_match(match: Match, rep: MatchesRepository = Depends(get_match_repository)):
+async def create_match(match: Match, rep: MatchesRepository = Depends(get_match_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.create(match)
     if id:
         return JSONResponse(content={"message": "Match created", 'match_id': id}, status_code=201)
@@ -25,7 +25,7 @@ async def get_match(match_id: int, rep: MatchesRepository = Depends(get_match_re
 
 
 @router.put("/matches/")
-async def update_match(match: Match, rep: MatchesRepository = Depends(get_match_repository)):
+async def update_match(match: Match, rep: MatchesRepository = Depends(get_match_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.update(match)
     if id:
         return JSONResponse(content={"message": "Match update", 'match_id': id}, status_code=200)
@@ -34,7 +34,7 @@ async def update_match(match: Match, rep: MatchesRepository = Depends(get_match_
 
 
 @router.post("/matches/{date}")
-async def create_date(date: str, rep: MatchesRepository = Depends(get_match_repository)):
+async def create_date(date: str, rep: MatchesRepository = Depends(get_match_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.create_date(date)
     if id:
         return JSONResponse(content = {date:id})
@@ -43,7 +43,7 @@ async def create_date(date: str, rep: MatchesRepository = Depends(get_match_repo
     
 
 @router.delete("/matches/{match_id}")
-async def delete_match(match_id: int, rep: MatchesRepository = Depends(get_match_repository)):
+async def delete_match(match_id: int, rep: MatchesRepository = Depends(get_match_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.delete(match_id)
     if id:
         return Response(status_code=204)

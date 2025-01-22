@@ -1,16 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
 from fastapi.responses import JSONResponse
-from dependencies import get_season_repository
+from dependencies import get_season_repository, get_current_active_user, get_current_active_admin
 from repositories import SeasonRepository
 from models import Season
 import asyncpg
-from update import UpdateFactory
-import asyncio
 
 router = APIRouter()
 
 @router.post("/seasons/")
-async def create_season(season: Season, rep: SeasonRepository = Depends(get_season_repository)):
+async def create_season(season: Season, rep: SeasonRepository = Depends(get_season_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.create(season.name)
     if id:
         return JSONResponse(content={"message": "Season created", 'seson_id': id}, status_code=201)
@@ -37,7 +35,7 @@ async def get_season(season_id: int, rep: SeasonRepository = Depends(get_season_
 
 
 @router.put("/seasons/", response_model=Season)
-async def update_season(season: Season, rep: SeasonRepository = Depends(get_season_repository)):
+async def update_season(season: Season, rep: SeasonRepository = Depends(get_season_repository), _: str = Depends(get_current_active_admin)):
     try:
         id = await rep.update(season)
     except asyncpg.exceptions.UniqueViolationError:
@@ -49,7 +47,7 @@ async def update_season(season: Season, rep: SeasonRepository = Depends(get_seas
 
 
 @router.delete("/seasons/{season_id}")
-async def delete_season(season_id: int, rep: SeasonRepository = Depends(get_season_repository)):
+async def delete_season(season_id: int, rep: SeasonRepository = Depends(get_season_repository), _: str = Depends(get_current_active_admin)):
     id = await rep.delete(season_id)
     if id:
         return Response(status_code=204)
