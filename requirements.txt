@@ -11,3 +11,4 @@ requests
 pydantic-settings
 python-jose
 python-multipart
+bcrypt

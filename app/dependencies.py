@@ -33,7 +33,7 @@ async def get_users_repository(connection=Depends(get_database_connection)) -> U
 
 
 # Зависимость для проверки прав доступа
-async def get_current_user(token: str = Depends(oauth2_scheme), access_token: Union[str | None] = Cookie(None, include_in_schema=False)):
+async def get_current_user(token: str = Depends(oauth2_scheme), access_token: Union[str , None] = Cookie(None, include_in_schema=False)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

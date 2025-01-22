@@ -4,8 +4,9 @@ import os
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=os.path.join("app", ".env"), env_file_encoding="utf-8", extra="ignore"
+        env_file="/app/.env", env_file_encoding="utf-8", extra="ignore"
     )
+   
     domain: str
     initial_link: str
     main_link: str
@@ -29,3 +30,6 @@ class SSL(Settings):
     root_certfile:str
     certfile:str
     keyfile:str
+
+
+setting = Settings()
