@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 
 class Match(BaseModel):
     old_id: int
@@ -19,7 +19,7 @@ class Match(BaseModel):
     periods: Optional[Dict] = None
     time_str: Optional[str] = None
     link_title: Optional[str] = None
-    date_id: int
+    date_id: Union[int,str]
     champ_id: int
     home_team_id: int
     away_team_id: int

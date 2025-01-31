@@ -29,7 +29,7 @@ celery_app.autodiscover_tasks()
 def update_base(date):
     loop = asyncio.get_event_loop()
     updater = UpdateFactory('db', date)
-    return loop.run_until_complete(updater.run())
+    return loop.run_until_complete(updater.create_updater())
 
 
 
