@@ -4,7 +4,6 @@ from repositories import ChampionshipRepository, SeasonRepository, TeamRepositor
 from fastapi import Depends, HTTPException, status, Cookie, Request
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
-from services.auth_service import AuthService
 from typing import Union
 from config import config
 

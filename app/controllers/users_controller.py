@@ -5,7 +5,7 @@ from datetime import  timedelta
 from dependencies import get_users_repository, get_current_active_user, get_current_user
 from repositories import UsersRepository
 from models import User
-from services.auth_service import AuthService
+from services.auth import AuthService
 from config import config
 
 
