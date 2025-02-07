@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: str
-
+    user_admin: str
+    user_admin_password: str
 
 
 class DB(Settings):

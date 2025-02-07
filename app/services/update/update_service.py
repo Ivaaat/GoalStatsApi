@@ -10,6 +10,8 @@ from services.update.preparers import DataPreparer
 from services.update.factories import CollectorFactory
 from services.update.updaters import *
 from db.database import get_pool
+from config import config
+import requests
 
 
 class Updater(ABC):
@@ -55,12 +57,31 @@ class APIUpdaterService(Updater):
 
 
     def __init__(self, prepare: DataPreparer) -> None:
+        auth = {
+            "username": config.setting.user_admin,
+            "password": config.setting.user_admin_password
+        }
+        response = requests.post(f'{config.setting.domain}/token', data=auth)
+        UpdateApi.headers = {
+            "Authorization": f"Bearer {response.json()['access_token']}"
+        }
+
         self.date_update = DateUpdateApi(prepare.tournaments)
         self.season_update = SeasonUpdateApi(prepare.season.data)
         self.champ_update = ChampUpdateApi(prepare.champ.data)
         self.team_update = TeamUpdateApi(prepare.team.data)
         self.match_update = MatchUpdateApi(prepare.matches.data)
 
+
+    async def update(self):
+        await self.date_update.update() 
+        await self.season_update.update()
+        await self.champ_update.update(season = self.season_update.update_match)
+        await self.team_update.update()
+        await self.match_update.update(date = self.date_update.update_match, 
+                                    champ = self.champ_update.update_match, 
+                                    team = self.team_update.update_match)
+        print("Update {}".format(', '.join(self.date_update.data.keys())))
 
     # async def update(self):
     #     tasks = [DateUpdateApi.update(date_update) for date_update in list(self.data.keys())]
@@ -127,7 +148,7 @@ async def profile(func, sep):
 
 if __name__ == '__main__':
     start = time.time()
-    facade = UpdateFacade('2025-01-30')
+    facade = UpdateFacade('2025-02-07')
     asyncio.run(facade.run())
     print(time.time() - start)
 

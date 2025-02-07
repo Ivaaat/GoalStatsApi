@@ -2,7 +2,7 @@ from celery import Celery
 import time
 #import redis
 import os
-from services.update.update_service import UpdateFactory
+from services.update.update_service import UpdateFacade
 import asyncio
 os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
 
@@ -28,8 +28,8 @@ celery_app.autodiscover_tasks()
 @celery_app.task
 def update_base(date):
     loop = asyncio.get_event_loop()
-    updater = UpdateFactory(date)
-    return loop.run_until_complete(updater.create_updater())
+    updater = UpdateFacade(date)
+    return loop.run_until_complete(updater.run())
 
 
 
