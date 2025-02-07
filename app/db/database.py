@@ -1,4 +1,3 @@
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import asyncpg
@@ -24,6 +23,16 @@ async def lifespan(app: FastAPI):
     yield
     await pool.close()
 
+
+async def get_pool() -> asyncpg.Pool: 
+    return await asyncpg.create_pool(
+        user=config.db.user,
+        password=config.db.password,
+        database=config.db.name,
+        host=config.db.host, 
+        port=config.db.port,
+        ssl=get_ssl_context()
+    )
 
 
 async def get_database_connection() -> AsyncIterator[asyncpg.Connection]:

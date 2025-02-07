@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 
 class Championship(BaseModel):
     id: Optional[int] = None 
@@ -16,4 +16,4 @@ class Championship(BaseModel):
     is_cup: Optional[bool] = None
     alias: Optional[str] = None
     champ_id: Optional[int] = None
-    season_id: Optional[int] = None
+    season_id: Optional[Union[int, str]] = None

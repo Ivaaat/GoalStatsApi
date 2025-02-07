@@ -19,7 +19,7 @@ app.include_router(championship_router, prefix="/api", tags=["championships"])
 app.include_router(team_router, prefix="/api", tags=["teams"])
 app.include_router(player_router, prefix="/api", tags=["players"])
 app.include_router(match_router, prefix="/api", tags=["matches"])
-#app.include_router(statistics_router, prefix="/api", tags=["statistics"])
+app.include_router(statistics_router, prefix="/api", tags=["statistics"])
 
 # Настройка CORS 
 origins = ["*"]
@@ -42,4 +42,6 @@ async def read_root(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    #uvicorn.run(app, host="127.0.0.1", port=8000, reload = True)
+    
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload = True)

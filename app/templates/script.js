@@ -228,13 +228,6 @@ async function updateSelect(query) {
     });
     champSelect.innerHTML = ''
     champSelect.appendChild(defSelectChampOption)
-    let oneChamp = ''
-    Object.keys(statTeam).forEach(champName => {
-        const option = document.createElement('option');
-        option.value = statTeam[champName];
-        option.textContent = statTeam[champName];
-        champSelect.appendChild(option);
-    });
     teamSelect.innerHTML = ''
     let option = document.createElement('option');
     option.value = query;

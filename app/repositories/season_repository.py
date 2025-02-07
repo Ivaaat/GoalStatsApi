@@ -32,6 +32,11 @@ class SeasonRepository:
                                         ORDER BY name asc""", season_id)
 
 
+    async def get_name(self, season_name: int):
+        return await self.db.fetchval("""SELECT id, name FROM stats.seasons
+                                        where name = $1 
+                                        ORDER BY name asc""", season_name)
+
     async def update(self, season: Season):
         return await self.db.fetchval('UPDATE stats.seasons SET name = $2 WHERE id = $1 RETURNING id', season.id, season.name)
         
