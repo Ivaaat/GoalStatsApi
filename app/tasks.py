@@ -4,7 +4,7 @@ import time
 import os
 from services.update.update_service import UpdateFacade
 import asyncio
-os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
+
 
 # redis_host = '127.0.0.1'  # Хост Redis-сервера
 # redis_port = 6379  # Порт Redis-сервера

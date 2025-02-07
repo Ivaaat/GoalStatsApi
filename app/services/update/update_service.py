@@ -1,9 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
 import asyncio
-
-sys.path.append('D:\\vs_code\\GoalStatsApi\\app\\')
-
 import time
 from typing import Union
 from services.update.preparers import DataPreparer
@@ -126,6 +123,7 @@ class UpdateFacade:
         self.prepare.prepare()
         #await profile(self.updater.update,'await self.updater.update()')
         await self.updater.update()
+        return 'Completed'
 
 
 
