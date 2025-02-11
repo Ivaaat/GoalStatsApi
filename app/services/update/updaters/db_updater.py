@@ -50,20 +50,24 @@ class ChampUpdateDatabase(UpdateDatabase):
             for data in self.data.values():
                 champ = Championship(**data)
                 champ.season_id = kwargs['season'][champ.season_id]
-                await rep.create(champ)
+                id = await rep.create(champ)
+                if not id:
+                    await rep.update(champ)
                 self.update_match[champ.old_id] = champ.id
 
 
 class TeamUpdateDatabase(UpdateDatabase):
 
-    async def update(self, conn):
+    async def update(self, conn, **kwargs):
             rep = TeamRepository(conn)
             for data in self.data.values():
                 team = Team(**data)
-                await rep.create(team)
+                team.champ_id= kwargs['champ'][team.champ_id]
+                id = await rep.create(team)
+                if not id:
+                     await rep.update(team)
                 self.update_match[team.old_id] = team.id
-                if team.old_id == 263932:
-                     print
+                
 
 
 class MatchUpdateDatabase(UpdateDatabase):

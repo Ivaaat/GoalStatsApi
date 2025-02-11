@@ -23,5 +23,16 @@ services:
       - ./certs:/etc/ssl/certs
     depends_on:
       - redis
-    command: ["celery", "-A", "tasks", "worker", "--loglevel=info"]
+    command: ["celery", "-A", "tasks", "worker", "-B","--loglevel=info"]
+  
+  flower:
+    build: .
+    volumes:
+      - ./app:/app
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
+    command: celery -A tasks flower --broker=redis://redis:6379/0
     

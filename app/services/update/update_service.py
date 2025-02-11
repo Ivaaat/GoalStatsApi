@@ -26,7 +26,7 @@ class Updater(ABC):
             await self.date_update.update(conn) 
             await self.season_update.update(conn)
             await self.champ_update.update(conn, season = self.season_update.update_match)
-            await self.team_update.update(conn)
+            await self.team_update.update(conn, champ = self.champ_update.update_match)
             await self.match_update.update(conn, date = self.date_update.update_match, 
                                         champ = self.champ_update.update_match, 
                                         team = self.team_update.update_match)
@@ -80,22 +80,6 @@ class APIUpdaterService(Updater):
                                     team = self.team_update.update_match)
         print("Update {}".format(', '.join(self.date_update.data.keys())))
 
-    # async def update(self):
-    #     tasks = [DateUpdateApi.update(date_update) for date_update in list(self.data.keys())]
-    #     await asyncio.gather(*tasks)
-    #     for date, stat in self.data.items():
-    #         for tournaments in stat['tournaments'].values():
-    #             self.season, self.champ, self.team, self.matches = SeasonPrepare(), ChampPrepare(), TeamPrepare(), MatchPrepare() 
-    #             await asyncio.gather(*[self.season.prepare(tournaments), self.champ.prepare(tournaments), self.team.prepare(tournaments['matches'])])
-    #             tasks = []
-    #             tasks.append(SeasonUpdateApi.update(self.season.data))
-    #             tasks.append(ChampUpdateApi.update(self.champ.data))
-    #             tasks.extend([TeamUpdateApi.update(team) for team in self.team.data.values()])
-    #             await asyncio.gather(*tasks)
-    #             await self.matches.prepare(tournaments['matches'], tournaments['id'], date)
-    #             await asyncio.gather(*[MatchUpdateApi.update(match) for match in self.matches.data.values()])
-    #         print("Update {}".format(date))
-        
 
 class UpdateFactory:
 
@@ -146,7 +130,7 @@ async def profile(func, sep):
 
 if __name__ == '__main__':
     start = time.time()
-    facade = UpdateFacade('2025-02-07')
+    facade = UpdateFacade('2025-02-11')
     asyncio.run(facade.run())
     print(time.time() - start)
 

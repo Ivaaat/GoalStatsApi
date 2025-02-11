@@ -8,4 +8,5 @@ class Team(BaseModel):
     name: str
     icon: Optional[str] = ""
     old_id: Optional[int] = 0
+    champ_id: Optional[int] = 0
     

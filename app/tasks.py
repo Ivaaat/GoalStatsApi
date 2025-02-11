@@ -1,19 +1,8 @@
 from celery import Celery
-import time
-#import redis
-import os
 from services.update.update_service import UpdateFacade
 import asyncio
-
-
-# redis_host = '127.0.0.1'  # Хост Redis-сервера
-# redis_port = 6379  # Порт Redis-сервера
-# client = redis.Redis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
-
-# if client.ping():
-#     print('Успешное подключение к Redis-серверу!')
-# else:
-#     print('Нет связи с Redis-сервером!')
+from celery.schedules import crontab
+from datetime import datetime
 
 
 
@@ -23,7 +12,14 @@ broker='redis://redis:6379/0',
 backend='redis://redis:6379/0' 
 )
 
-celery_app.autodiscover_tasks()
+
+# celery_app.conf.beat_schedule = {
+#     'update-base-every-minute': {
+#         'task': 'tasks.update_base',
+#         'schedule': crontab(minute='*/1'),
+#         'args': (datetime.now().strftime('%Y-%m-%d'),),
+#     },
+# }
 
 @celery_app.task
 def update_base(date):

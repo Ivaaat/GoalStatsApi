@@ -14,12 +14,13 @@ class TeamRepository:
             team.id = id_team
             return None
         id_team_all = await self.db.fetchval("""INSERT INTO stats.teams (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id""", team.name)
-        team.id = await self.db.fetchval("""INSERT INTO stats.teams_info ("name", icon, old_id, team_id) 
-                                    VALUES ($1,$2,$3,$4) RETURNING id""", 
+        team.id = await self.db.fetchval("""INSERT INTO stats.teams_info ("name", icon, old_id, team_id, champ_id) 
+                                    VALUES ($1,$2,$3,$4,$5) RETURNING id""", 
                                     team.name,
                                     team.icon,
                                     team.old_id,
-                                    id_team_all)
+                                    id_team_all,
+                                    team.champ_id)
         return team.id
     
     async def get(self, team_id: int):
@@ -76,13 +77,15 @@ class TeamRepository:
                                         SET 
                                             name = $1,
                                             icon = $2,
-                                            old_id = $3
+                                            old_id = $3,
+                                            champ_id = $5
                                         WHERE id = $4
                                         RETURNING id;""", 
-                                    team.name,
+                                    team.name,  
                                     team.icon,
                                     team.old_id,
-                                    team.id
+                                    team.id,
+                                    team.champ_id
                                     )
 
 

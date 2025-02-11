@@ -36,16 +36,18 @@ class TeamPrepare(StatPrepare):
 
     
 
-    def prepare(self, data: str):
+    def prepare(self, champ_id:int, data: str):
         for teams in data:
             team1 = teams['teams'][0]
-            self.data[team1['name']] = {'name':team1['name'],
+            self.data[team1['name']+str(team1['id'])] = {'name':team1['name'],
                                         'icon':team1['icon'],
-                                        'old_id':team1['id']}
+                                        'old_id':team1['id'],
+                                        'champ_id': champ_id}
             team2 = teams['teams'][1]
-            self.data[team2['name']] = {'name':team2['name'],
+            self.data[team2['name']+str(team2['id'])] = {'name':team2['name'],
                                         'icon':team2['icon'],
-                                        'old_id':team2['id']}
+                                        'old_id':team2['id'],
+                                        'champ_id': champ_id}
             
 
 class ChampPrepare(StatPrepare):
@@ -133,7 +135,7 @@ class DataPreparer:
             for tournament in tournaments['tournaments'].values():
                 self.season.prepare(tournament)
                 self.champ.prepare(tournament) 
-                self.team.prepare(tournament['matches'])
+                self.team.prepare(tournament['id'], tournament['matches'])
                 self.matches.prepare(date, tournament['id'], tournament['matches'], )
         return (self.season.data, self.champ.data, self.team.data)
 
