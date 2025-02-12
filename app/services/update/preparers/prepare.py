@@ -4,7 +4,7 @@ from config import config
 import re
 from typing import List, Dict, Union
 import multiprocessing
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from services.update.collectors import Collector
 
 HEADERS = {
@@ -137,11 +137,19 @@ class DataPreparer:
                 self.champ.prepare(tournament) 
                 self.team.prepare(tournament['id'], tournament['matches'])
                 self.matches.prepare(date, tournament['id'], tournament['matches'], )
-        return (self.season.data, self.champ.data, self.team.data)
+        return (self.season.data, self.champ.data, self.team.data, self.matches.data)
 
     def prepare(self):
         if len(self.tournaments) < multiprocessing.cpu_count():
             self._prepare(self.tournaments)
         else:
-            with ThreadPoolExecutor() as executor:
-                executor.map(self._prepare, self.tournaments)
+            # with ThreadPoolExecutor() as executor:
+            #     executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
+            with ProcessPoolExecutor() as executor:
+                result = executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
+            for res in result:
+                self.season.data.update(res[0])
+                self.champ.data.update(res[1])
+                self.team.data.update(res[2])
+                self.matches.data.update(res[3])
+                
