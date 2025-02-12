@@ -143,13 +143,13 @@ class DataPreparer:
         if len(self.tournaments) < multiprocessing.cpu_count():
             self._prepare(self.tournaments)
         else:
-            # with ThreadPoolExecutor() as executor:
-            #     executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
-            with ProcessPoolExecutor() as executor:
-                result = executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
-            for res in result:
-                self.season.data.update(res[0])
-                self.champ.data.update(res[1])
-                self.team.data.update(res[2])
-                self.matches.data.update(res[3])
+            with ThreadPoolExecutor() as executor:
+                executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
+            # with ProcessPoolExecutor() as executor:
+            #     result = executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
+            # for res in result:
+            #     self.season.data.update(res[0])
+            #     self.champ.data.update(res[1])
+            #     self.team.data.update(res[2])
+            #     self.matches.data.update(res[3])
                 

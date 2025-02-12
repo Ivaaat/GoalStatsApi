@@ -8,18 +8,20 @@ class DataGeneratorFactory:
     
 
     @staticmethod
-    def create_generator(date: str, strategy: str = 'toDay'):
+    def create_generator(date: str):
         try:
-            if strategy == 'day':
+            if len(date) == 10:
                 datetime.strptime(date, '%Y-%m-%d')
                 return SingleDateGenerator(date)
-            elif strategy == 'range':
+            elif len(date) == 21:
                 datetime.strptime(date[:10], '%Y-%m-%d')
                 datetime.strptime(date[-10:], '%Y-%m-%d')
                 return DateRangeGenerator(date[:10], date[-10:])
-            elif strategy == 'toDay':
-                datetime.strptime(date, '%Y-%m-%d')
-                return UntilDateGenerator(date)
+            elif len(date) == 11 and date.startswith('-'):
+                datetime.strptime(date[1:], '%Y-%m-%d')
+                return UntilDateGenerator(date[1:])
+            else:
+                raise ValueError
         except ValueError as e:
             print('Неверный формат даты {}'.format(e))
             sys.exit()

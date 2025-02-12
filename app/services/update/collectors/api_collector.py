@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import List, Dict, Union
-import sys
+import random
 import asyncio
 import aiohttp
 import ssl
@@ -95,6 +95,7 @@ class DateCollector(Collector):
         async with SEMAPHORE:
             async with aiohttp.ClientSession() as session:
                 async with session.get('{}{}'.format(config.setting.initial_link, date), ssl=ssl_context) as response:
+                    await asyncio.sleep(random.uniform(1, 2))
                     if response.status:
                         result = await response.json()
                         if result.get('matches'):
