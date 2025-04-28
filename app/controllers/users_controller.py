@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import  timedelta
-from dependencies import get_users_repository, get_current_active_user, get_current_user
-from repositories import UsersRepository
-from models import User
-from services.auth import AuthService
-from config import config
+from ..dependencies import get_users_repository, get_current_active_user, get_current_user
+from ..repositories import UsersRepository
+from ..models import User
+from ..services.auth import AuthService
+from app import config
 
 
 router = APIRouter()

@@ -1,5 +1,5 @@
 from celery import Celery
-from services.update.update_service import UpdateFacade
+from .services.update.update_service import UpdateFacade
 import asyncio
 from celery.schedules import crontab
 from datetime import datetime

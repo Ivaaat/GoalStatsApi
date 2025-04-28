@@ -2,7 +2,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta, timezone
-from config import config
+from app import config
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 

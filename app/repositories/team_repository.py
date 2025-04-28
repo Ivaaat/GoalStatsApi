@@ -1,5 +1,5 @@
 import asyncpg
-from models import Team
+from ..models import Team
 
 
 class TeamRepository:

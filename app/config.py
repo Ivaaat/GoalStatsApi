@@ -1,5 +1,5 @@
 import ssl
-from models import SSL, DB, Settings
+from .models import SSL, DB, Settings
 from pydantic import Field
 from pydantic_settings import BaseSettings
 

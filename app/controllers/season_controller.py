@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
 from fastapi.responses import JSONResponse
-from dependencies import get_season_repository, get_current_active_user, get_current_active_admin
-from repositories import SeasonRepository
-from models import Season
+from ..dependencies import get_season_repository, get_current_active_user, get_current_active_admin
+from ..repositories import SeasonRepository
+from ..models import Season
 import asyncpg
 
 router = APIRouter()

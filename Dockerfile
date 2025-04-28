@@ -1,20 +1,11 @@
 # Dockerfile
 
 # Используем официальный Python образ
-FROM python:3.9-slim
-
+FROM python:alpine
 
 # Устанавливаем рабочую директорию
-WORKDIR /app
+WORKDIR /goalStatApi
 
 # Копируем требования и устанавливаем зависимости
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Копируем остальное приложение
-#COPY ./app .
-# Копируем сертификаты
-#COPY /certs/* /etc/ssl/certs/
-
-# Указываем команду запуска
-#CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

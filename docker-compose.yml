@@ -1,16 +1,18 @@
+x-shared-volume: &shared-volume
+  - ./app:/goalStatApi/app
+  - ./etc/ssl/certs:/etc/ssl/certs
 
 services:
+
   app:
     build: .
-    volumes:
-      - ./app:/app
-      - ./certs:/etc/ssl/certs
+    volumes: *shared-volume
     ports:
       - "8000:8000"
     container_name: goalStatApi
     depends_on:
       - redis
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
   redis:
     image: "redis:alpine"  
@@ -18,21 +20,19 @@ services:
 
   worker:
     build: .
-    volumes:
-      - ./app:/app
-      - ./certs:/etc/ssl/certs
+    volumes: *shared-volume
     depends_on:
       - redis
-    command: ["celery", "-A", "tasks", "worker", "-B","--loglevel=info"]
+    command: ["celery", "-A", "app.tasks", "worker", "-B","--loglevel=info"]
   
+
   flower:
     build: .
-    volumes:
-      - ./app:/app
+    volumes: *shared-volume
     ports:
       - "5555:5555"
     depends_on:
       - redis
       - worker
-    command: celery -A tasks flower --broker=redis://redis:6379/0
+    command: ["celery", "-A", "app.tasks", "flower", "--broker=redis://redis:6379/0"]
     

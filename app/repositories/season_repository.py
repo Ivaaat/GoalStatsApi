@@ -1,5 +1,6 @@
 import asyncpg
-from models import Season
+from ..models import Season
+
 class SeasonRepository:
 
     def __init__(self, db: asyncpg.Connection):

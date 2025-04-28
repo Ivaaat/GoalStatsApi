@@ -1,8 +1,8 @@
-from models import Team
+from ..models import Team
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from dependencies import get_team_repository, get_current_active_admin
-from repositories import TeamRepository
+from ..dependencies import get_team_repository, get_current_active_admin
+from ..repositories import TeamRepository
 import asyncio
 import json
 import asyncpg

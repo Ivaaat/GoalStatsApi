@@ -1,5 +1,4 @@
-!app/
+etc
+.vscode
 **/__pycache__
 .env
-help_folder
-certs

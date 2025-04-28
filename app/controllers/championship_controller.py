@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Response
-from models import Championship
+from ..models import Championship
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from dependencies import get_championship_repository, get_current_active_admin
-from repositories import ChampionshipRepository
+from ..dependencies import get_championship_repository, get_current_active_admin
+from ..repositories import ChampionshipRepository
 import asyncpg
 
 router = APIRouter()

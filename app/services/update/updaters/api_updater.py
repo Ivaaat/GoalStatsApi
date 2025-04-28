@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
 import aiohttp
-from config import config
+from app import config
 import requests
 
 

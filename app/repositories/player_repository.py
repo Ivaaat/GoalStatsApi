@@ -1,4 +1,5 @@
 import asyncpg 
+
 class PlayerRepository:
     def __init__(self, db: asyncpg.Connection):
         self.db = db

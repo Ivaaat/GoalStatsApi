@@ -1,11 +1,11 @@
 from fastapi import Depends
-from db import get_database_connection
-from repositories import ChampionshipRepository, SeasonRepository, TeamRepository, PlayerRepository, StatisticsRepository, MatchesRepository, UsersRepository
+from .db import get_database_connection
+from .repositories import ChampionshipRepository, SeasonRepository, TeamRepository, PlayerRepository, StatisticsRepository, MatchesRepository, UsersRepository
 from fastapi import Depends, HTTPException, status, Cookie, Request
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 from typing import Union
-from config import config
+from app import config
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 

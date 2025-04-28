@@ -1,8 +1,9 @@
 from typing import List, Dict
 from abc import ABC, abstractmethod
+import pydantic
 import asyncpg
-from repositories import SeasonRepository, ChampionshipRepository, TeamRepository, MatchesRepository
-from models import Championship, Team, Match
+from ....repositories import SeasonRepository, ChampionshipRepository, TeamRepository, MatchesRepository
+from ....models import Championship, Team, Match
 
 
 class UpdateDatabase(ABC):
@@ -75,10 +76,18 @@ class MatchUpdateDatabase(UpdateDatabase):
     async def update(self, conn, **kwargs):
             rep = MatchesRepository(conn)
             for data in self.data.values():
-                match = Match(**data)
-                match.date_id = kwargs['date'][match.date_id]
-                match.champ_id = kwargs['champ'][match.champ_id]
-                match.home_team_id = kwargs['team'][match.home_team_id]
-                match.away_team_id = kwargs['team'][match.away_team_id]
-                if not await rep.create(match):
-                    await rep.update(match)
+                try:
+                    match = Match(**data)
+                    match.date_id = kwargs['date'][match.date_id]
+                    match.champ_id = kwargs['champ'][match.champ_id]
+                    match.home_team_id = kwargs['team'][match.home_team_id]
+                    match.away_team_id = kwargs['team'][match.away_team_id]
+                    id_match = await rep.create(match)
+                except pydantic.ValidationError:
+                     pass
+                if not id_match:
+                    print()
+                    # try:
+                    #     await rep.update(match)
+                    # except asyncpg.exceptions.UniqueViolationError:
+                    #      print()

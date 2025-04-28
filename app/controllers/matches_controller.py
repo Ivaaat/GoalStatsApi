@@ -1,8 +1,8 @@
-from models import Match
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
-from dependencies import get_match_repository, get_current_active_admin
-from repositories import MatchesRepository
+from ..models import Match
+from ..dependencies import get_match_repository, get_current_active_admin
+from ..repositories import MatchesRepository
 
 router = APIRouter()
 

@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import asyncpg
-from config import get_ssl_context, config
+from app import get_ssl_context, config
 from typing import AsyncIterator
 
 

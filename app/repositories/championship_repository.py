@@ -1,5 +1,5 @@
 import asyncpg
-from models import Championship
+from ..models import Championship
 
 class ChampionshipRepository:
     def __init__(self, db: asyncpg.Connection):
@@ -53,14 +53,12 @@ class ChampionshipRepository:
                                             link = $5,
                                             is_active = $6,
                                             is_top = $7,
-                                            start_date = $8,
-                                            end_date = $9,
-                                            is_cup = $10,
-                                            country = $11,
-                                            alias = $12,
-                                            champ_id = $13,
-                                            season_id = $14
-                                        WHERE id = $15
+                                            is_cup = $8,
+                                            country = $9,
+                                            alias = $10,
+                                            champ_id = $11,
+                                            season_id = $12
+                                        WHERE id = $13
                                         RETURNING id;""", 
                                     championat.name,
                                     championat.priority,
@@ -69,8 +67,6 @@ class ChampionshipRepository:
                                     championat.link,
                                     championat.is_active,
                                     championat.is_top,
-                                    championat.start_date,
-                                    championat.end_date,
                                     championat.is_cup,
                                     championat.country,
                                     championat.alias,

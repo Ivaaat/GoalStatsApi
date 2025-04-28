@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 import asyncio
 import time
 from typing import Union
-from services.update.preparers import DataPreparer
-from services.update.factories import CollectorFactory
-from services.update.updaters import *
-from db.database import get_pool
-from config import config
+from .preparers import DataPreparer
+from .factories import CollectorFactory
+from .updaters import *
+from ...db import get_pool
+from ...config import config
 import requests
 
 
@@ -130,7 +130,7 @@ async def profile(func, sep):
 
 if __name__ == '__main__':
     start = time.time()
-    facade = UpdateFacade('2025-02-11')
+    facade = UpdateFacade('-2025-04-25')
     asyncio.run(facade.run())
     print(time.time() - start)
 

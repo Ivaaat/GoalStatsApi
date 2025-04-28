@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from tasks import update_base
-from dependencies import get_current_active_admin
+from app import update_base
+from ..dependencies import get_current_active_admin
 
 router = APIRouter()
 

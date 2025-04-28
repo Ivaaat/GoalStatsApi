@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 import requests
-from config import config
+from app import config
 import re
 from typing import List, Dict, Union
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from services.update.collectors import Collector
-
+from ..collectors import Collector
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 }
@@ -61,21 +60,21 @@ class ChampPrepare(StatPrepare):
         season = ['', '']
         #async with aiohttp.ClientSession() as session:
             #async with session.get('{}{}'.format(config.setting.main_link, data['link']), ssl=ssl_context) as response:
-        response = sess.get('{}{}'.format(config.setting.main_link, data['link']))
-        if response.status_code == 200:
-            text = response.text
-            pattern = r"<script>document\.write\('<div>(.*)</div>'\)</script>"
-            match = re.search(pattern, text)
-            season = match.group(1).split('—')
+        # response = sess.get('{}{}'.format(config.setting.main_link, data['link']))
+        # if response.status_code == 200:
+        #     text = response.text
+        #     pattern = r"<script>document\.write\('<div>(.*)</div>'\)</script>"
+        #     match = re.search(pattern, text)
+        #     season = match.group(1).split('—')
         self.data[name] = {
             'name': name,
             'country': None,
-            'priority': data['priority'],
-            'img': data['img'],
+            'priority': data.get('priority', 0),
+            'img': data.get('img'),
             'old_id': data['id'],
             'link': data['link'],
-            'is_active': data['is_active'],
-            'is_top': data['is_top'],
+            'is_active': data.get('is_active', False),
+            'is_top': data.get('is_top', False),
             'start_date': season[0],
             'end_date': season[1],
             'is_cup': None,
@@ -99,7 +98,6 @@ class MatchPrepare(StatPrepare):
                "old_id": match['id'],
                 "section": match["section"],
                 "link": match.get("link"),
-                "time": match.get("time"),
                 "groups": match.get("group"),
                 "flags":  match.get("flags"),
                 "result":  match.get("result"),
@@ -128,6 +126,22 @@ class DataPreparer:
         self.team = TeamPrepare()
         self.matches = MatchPrepare()
         self.tournaments: List[Dict[str, Union[str, List[str]]]] = collector.data
+
+
+    def prepare(self):
+        if len(self.tournaments) < multiprocessing.cpu_count():
+            self._prepare(self.tournaments)
+        else:
+            self._prepare(self.tournaments)
+            # with ThreadPoolExecutor() as executor:
+            #     executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
+            # with ProcessPoolExecutor() as executor:
+            #     result = executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
+            # for res in result:
+            #     self.season.data.update(res[0])
+            #     self.champ.data.update(res[1])
+            #     self.team.data.update(res[2])
+            #     self.matches.data.update(res[3])
     
 
     def _prepare(self, date_tournaments: List[Dict[str, Union[str, List[str]]]]):
@@ -139,17 +153,5 @@ class DataPreparer:
                 self.matches.prepare(date, tournament['id'], tournament['matches'], )
         return (self.season.data, self.champ.data, self.team.data, self.matches.data)
 
-    def prepare(self):
-        if len(self.tournaments) < multiprocessing.cpu_count():
-            self._prepare(self.tournaments)
-        else:
-            with ThreadPoolExecutor() as executor:
-                executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
-            # with ProcessPoolExecutor() as executor:
-            #     result = executor.map(self._prepare, [{date: tournaments} for date, tournaments in self.tournaments.items()])
-            # for res in result:
-            #     self.season.data.update(res[0])
-            #     self.champ.data.update(res[1])
-            #     self.team.data.update(res[2])
-            #     self.matches.data.update(res[3])
+    
                 

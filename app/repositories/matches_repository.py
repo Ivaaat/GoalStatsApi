@@ -1,5 +1,5 @@
 import asyncpg
-from models import Match
+from ..models import Match
 from datetime import datetime
 import json
 
@@ -12,7 +12,7 @@ class MatchesRepository:
     async def create(self, match: Match):
         try:
             id = await self.db.fetchval("""INSERT INTO stats.matches (old_id,section,link,time,groups,flags,result,status,pub_date,score,total_home,total_away,roundforltandmc,tour,periods,time_str,link_title,date_id,champ_id,home_team_id,away_team_id) 
-                                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) ON CONFLICT (old_id) DO NOTHING RETURNING id""", 
+                                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING id""", 
                                         match.old_id,
                                         match.section,
                                         match.link,
@@ -35,7 +35,7 @@ class MatchesRepository:
                                         match.home_team_id,
                                         match.away_team_id)
             return id
-        except asyncpg.UniqueViolationError:
+        except asyncpg.exceptions.UniqueViolationError:
             return await self.update(match)
     
 
@@ -51,7 +51,8 @@ class MatchesRepository:
 
 
     async def update(self, match: Match):
-        id = await self.db.fetchval("""UPDATE stats.matches 
+        try:
+            id = await self.db.fetchval("""UPDATE stats.matches 
                                         SET section = $2, 
                                             link = $3, 
                                             time = $4, 
@@ -94,7 +95,14 @@ class MatchesRepository:
                                     match.champ_id,
                                     match.home_team_id,
                                     match.away_team_id)
-        return id
+            return id
+        except asyncpg.exceptions.UniqueViolationError:
+            await self.db.fetchval('DELETE FROM stats.matches WHERE date_id = $1 and champ_id = $2 and home_team_id=$3 and away_team_id=$4', 
+                                                                                                match.date_id,
+                                                                                                match.champ_id,
+                                                                                                match.home_team_id,
+                                                                                                match.away_team_id)
+            return await self.update(match)
 
 
     async def delete(self, match_id: int):

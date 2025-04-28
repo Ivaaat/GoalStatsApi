@@ -5,8 +5,8 @@ import random
 import asyncio
 import aiohttp
 import ssl
-from config import config
-from services.update.collectors import Collector
+from app import config
+from ..collectors import Collector
 
 
 
@@ -69,13 +69,6 @@ class DateRangeGenerator(DateGenerator):
         self._generate_date_range(start_date= self.start_date, end_date_str=self.end_date_str)
 
 
-
-
-
-
-
-
-
 class DateCollector(Collector):
 
 
@@ -94,8 +87,8 @@ class DateCollector(Collector):
     async def _collect_date(self, date: str):
         async with SEMAPHORE:
             async with aiohttp.ClientSession() as session:
-                async with session.get('{}{}'.format(config.setting.initial_link, date), ssl=ssl_context) as response:
-                    await asyncio.sleep(random.uniform(1, 2))
+                async with session.get('{}{}'.format(config.setting.initial_link, date), ssl=ssl_context, timeout = 5) as response:
+                    await asyncio.sleep(random.uniform(0.5, 1))
                     if response.status:
                         result = await response.json()
                         if result.get('matches'):
@@ -115,23 +108,26 @@ class RangeCollector(DateCollector):
      
      async def collect(self):
         await super().collect()
-        asyncio.gather(*[self._collect_date(date) for date in self.dates])
+        tasks = [self._collect_date(date) for date in self.dates]
+        await asyncio.gather(*tasks)
         
 
 class UntilCollector(DateCollector):
      
      async def collect(self):
         await super().collect()
-        date_start = self.dates[0]
-        if self.dates[0] > self.dates[-1]:
-            direction = 'prev'         
-        else:
-            direction = 'next'   
-        while date_start in self.dates:
-            try:
-                data = await self._collect_date(date_start)
-                date_start = data['nav'][direction]['date']
-            except TypeError as e:
-                return print(f'Error fetching HTML: {e}')
+        tasks = [self._collect_date(date) for date in self.dates]
+        await asyncio.gather(*tasks)
+        # date_start = self.dates[0]
+        # if self.dates[0] > self.dates[-1]:
+        #     direction = 'prev'         
+        # else:
+        #     direction = 'next'   
+        # while date_start in self.dates:
+        #     try:
+        #         data = await self._collect_date(date_start)
+        #         date_start = data['nav'][direction]['date']
+        #     except TypeError as e:
+        #         return print(f'Error fetching HTML: {e}')
                 
          

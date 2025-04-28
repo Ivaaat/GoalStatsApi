@@ -1,7 +1,7 @@
 from datetime import datetime
 import sys
 from typing import Union
-from services.update.collectors import SingleDateGenerator, DateRangeGenerator, UntilDateGenerator, SingleDateCollector, RangeCollector, UntilCollector
+from ..collectors import SingleDateGenerator, DateRangeGenerator, UntilDateGenerator, SingleDateCollector, RangeCollector, UntilCollector
 
 
 class DataGeneratorFactory:
